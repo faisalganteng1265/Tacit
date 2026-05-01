@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import Aurora from "@/components/Aurora";
+import MarketplaceSidebar from "@/components/MarketplaceSidebar";
 
 const mentors = [
   {
@@ -15,7 +14,8 @@ const mentors = [
     gapCount: "12 Unresolved",
     sharePrice: "1,240",
     confidenceScore: "98.4%",
-    avatar: "IR",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDmEXNoAf-cmrKUiwhuPOpaf-1mlPbR4cehM2rReUiOo2pR5YTe2Y_fOieBJYQw_jjpObE2rUSUeNDpZXLLkfqIKq9eDx6Fq3naaIJ6NOUdh6TvXdSpR1mBGR9lbNuKz4l-ipSme9cTTlN69LdjblpvS-GdoEpVRO9MKyUXZf-pgQ2gP1ewqG9FgLo7t-LG4nmGXSCJbKBwUhTzVhejUHG9tF_1qCcdCRUc30KxL-C4qKOU2qD6qXSfUOcieWVkEwOxSK5b6CoRPc0",
   },
   {
     id: 2,
@@ -25,7 +25,8 @@ const mentors = [
     gapCount: "3 Unresolved",
     sharePrice: "3,890",
     confidenceScore: "82.1%",
-    avatar: "QA",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDwHax8-ONwCEu5RCRFNZaHEf3vFl3ZmHbQAdSZaM4Elv2YyMCoTOc0FZznxMitJ7LYmW39c3plK3Z8ehgMMV-ZK1-gKG21Qvd88ybTMVAgcJNZ61EUyP1Rzts6Af1PoKNP3L2pCYv1dXU_CpwzBY0H7T9WSL1UOwc4J795T3fNLfTee_C1ACovI8R5NBnWJ869DYe0pPkbhyIkST18eVEFU5SXJdxPbakmqDidBwNJorTZNOftAcjn4GlJ0zGc6U-ZcNNl5BltlBc",
   },
   {
     id: 3,
@@ -35,7 +36,8 @@ const mentors = [
     gapCount: "0 Unresolved",
     sharePrice: "8,105",
     confidenceScore: "99.9%",
-    avatar: "CS",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDwHax8-ONwCEu5RCRFNZaHEf3vFl3ZmHbQAdSZaM4Elv2YyMCoTOc0FZznxMitJ7LYmW39c3plK3Z8ehgMMV-ZK1-gKG21Qvd88ybTMVAgcJNZ61EUyP1Rzts6Af1PoKNP3L2pCYv1dXU_CpwzBY0H7T9WSL1UOwc4J795T3fNLfTee_C1ACovI8R5NBnWJ869DYe0pPkbhyIkST18eVEFU5SXJdxPbakmqDidBwNJorTZNOftAcjn4GlJ0zGc6U-ZcNNl5BltlBc",
   },
 ];
 
@@ -49,17 +51,8 @@ const topMentors = [
   { id: 2, name: "AlphaYield_Bot", change: "+9.5% This Week", avatar: "AY" },
 ];
 
-const sidebarLinks = [
-  { label: "MARKETPLACE", icon: "⊞", href: "/marketplace" },
-  { label: "MY MENTORS", icon: "⬡", href: "/my-mentors" },
-  { label: "MY SHARES", icon: "◈", href: "/my-shares" },
-  { label: "GAP REPORTS", icon: "⚠", href: "/gap-reports" },
-  { label: "EARNINGS", icon: "◎", href: "/earnings" },
-  { label: "SECURITY LOGS", icon: "⛨", href: "/security-logs" },
-];
-
 const accent = "text-[#2dd4bf]";
-const panelClass = "border border-[#1f2937] bg-[#111519]";
+const panelClass = "border border-[#2a2d32] bg-[#15171a]";
 const cardClass = `${panelClass} rounded-lg p-4`;
 const subtleButtonClass =
   "cursor-pointer rounded border border-[#374151] bg-transparent font-mono font-bold tracking-[0.1em] text-[#9ca3af]";
@@ -67,23 +60,22 @@ const accentButtonClass =
   "cursor-pointer rounded border border-[rgba(45,212,191,0.5)] bg-[rgba(45,212,191,0.08)] font-mono font-bold tracking-[0.1em] text-[#2dd4bf]";
 
 export default function MarketplacePage() {
-  const pathname = usePathname();
   const [activeFilter, setActiveFilter] = useState("TRENDING");
   const [activeNav, setActiveNav] = useState("MARKETPLACE");
 
   return (
-    <div className="relative isolate flex min-h-screen flex-col overflow-hidden bg-[#0b0d0f] font-mono text-[#d1d5db]">
+    <div className="relative isolate flex min-h-screen flex-col gap-4 overflow-hidden bg-[#0b0d0f] p-4 font-mono text-[#d1d5db]">
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-70">
         <Aurora
           colorStops={["#507f48", "#1b4315", "#433e55"]}
-          blend={0.5}
-          amplitude={1}
+          blend={0.75}
+          amplitude={2.4}
           speed={1}
         />
       </div>
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[#0b0d0f]/60" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[#0b0d0f]/64" />
 
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-[#1f2937] bg-[#0d1014]/90 px-5 backdrop-blur">
+      <header className="flex h-12 shrink-0 items-center justify-between rounded-lg border border-[#2a2d32] bg-[#050607]/95 px-5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-8">
           <span className="text-base font-extrabold tracking-[0.15em] text-white">
             AI<span className={accent}>MENTOR</span>.X
@@ -135,66 +127,14 @@ export default function MarketplacePage() {
         </div>
       </header>
 
-      <div className="flex flex-1">
-        <aside className="flex w-[200px] shrink-0 flex-col justify-between border-r border-[#1f2937] bg-[#0d1014]/85 py-4 backdrop-blur">
-          <div>
-            <div className="flex items-center gap-2.5 px-4 pb-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(45,212,191,0.4)] bg-[rgba(45,212,191,0.15)]">
-                <div className="h-2.5 w-2.5 rounded-full bg-[#2dd4bf]" />
-              </div>
-              <div>
-                <p className="text-[11px] font-bold tracking-[0.1em] text-white">NODE_01</p>
-                <p className="text-[9px] uppercase tracking-[0.08em] text-[#4b5563]">
-                  LIVE_DATING_ENCLAVE
-                </p>
-              </div>
-            </div>
-            <div className="mx-4 mb-3 h-px bg-[#1f2937]" />
+      <div className="flex min-h-0 flex-1 gap-4">
+        <MarketplaceSidebar />
 
-            <nav className="flex flex-col gap-0.5 px-2">
-              {sidebarLinks.map((link) => {
-                const isActive = pathname === link.href;
-
-                return (
-                  <Link
-                    key={link.label}
-                    className={`flex w-full cursor-pointer items-center gap-2.5 rounded border px-3 py-2 text-left font-mono text-[10px] font-bold tracking-[0.12em] transition-colors ${
-                      isActive
-                        ? "border-[rgba(45,212,191,0.25)] bg-[rgba(45,212,191,0.08)] text-[#2dd4bf]"
-                        : "border-transparent bg-transparent text-[#6b7280]"
-                    }`}
-                    href={link.href}
-                  >
-                    <span className="text-[13px]">{link.icon}</span>
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="px-3">
-            <button className="mb-3 w-full cursor-pointer rounded border border-[rgba(45,212,191,0.5)] bg-transparent py-2.5 font-mono text-[10px] font-extrabold tracking-[0.12em] text-[#2dd4bf]">
-              MINT NEW MENTOR
-            </button>
-            <div className="mb-2.5 h-px bg-[#1f2937]" />
-            {["SUPPORT", "SYSTEM STATUS"].map((item) => (
-              <button
-                key={item}
-                className="block w-full cursor-pointer border-0 bg-transparent px-1 py-1 text-left font-mono text-[10px] tracking-[0.1em] text-[#4b5563]"
-              >
-                {item === "SUPPORT" ? "? " : "↯ "}
-                {item}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto rounded-lg border border-[#2a2d32] bg-[#050607]/95 p-6 shadow-2xl shadow-black/30">
           <div className="mb-6 flex items-start justify-between">
             <div>
               <h1 className="mb-1.5 text-2xl font-bold text-white">Marketplace Explorer</h1>
-              <p className="max-w-[360px] text-xs leading-[1.6] text-[#6b7280]">
+              <p className="max-w-[520px] text-xs leading-[1.6] text-[#6b7280]">
                 Discover, analyze, and stake in elite AI mentors across specialized knowledge sectors.
                 Secure enclave execution guaranteed.
               </p>
@@ -229,13 +169,18 @@ export default function MarketplacePage() {
             </div>
           </div>
 
+          <div className="mb-4 h-px w-full bg-[#1f2937]" />
+
           <div className="mb-4 grid grid-cols-3 gap-4">
             {mentors.map((mentor) => (
               <div key={mentor.id} className={`flex flex-col ${cardClass}`}>
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#1f2937] bg-[#0f766e] text-xs font-bold text-white">
-                    {mentor.avatar}
-                  </div>
+                  <div
+                    aria-label={`${mentor.name} avatar`}
+                    className="h-10 w-10 shrink-0 rounded-md border border-[#343840] bg-[#262a30] bg-cover bg-center"
+                    role="img"
+                    style={{ backgroundImage: `url(${mentor.image})` }}
+                  />
                   <div>
                     <div className="mb-1 flex items-center gap-1.5">
                       <span className="text-[13px] font-bold text-white">{mentor.name}</span>
@@ -309,7 +254,7 @@ export default function MarketplacePage() {
                 {topMentors.map((mentor) => (
                   <div key={mentor.id} className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#1f2937] bg-[#0f766e] text-[10px] font-bold text-white">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#343840] bg-[#262a30] text-[10px] font-bold text-white">
                         {mentor.avatar}
                       </div>
                       <div>
@@ -328,7 +273,7 @@ export default function MarketplacePage() {
         </main>
       </div>
 
-      <footer className="flex shrink-0 items-center justify-between border-t border-[#1f2937] bg-[#0d1014] px-6 py-2.5">
+      <footer className="flex shrink-0 items-center justify-between rounded-lg border border-[#2a2d32] bg-[#050607]/95 px-6 py-2.5 shadow-2xl shadow-black/30">
         <p className="text-[9px] tracking-[0.1em] text-[#374151]">
           © 2024 AIMENTOR.X. POWERED BY 0G_PROTOCOL.
         </p>
