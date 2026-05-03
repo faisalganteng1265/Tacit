@@ -6,11 +6,12 @@ interface MentorWorkspaceMockProps {
 
 const panelClass =
   "border border-[rgba(96,165,250,0.24)] bg-[rgba(5,12,15,0.78)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_0_26px_rgba(45,212,191,0.06)]";
-const cardClass = `${panelClass} rounded-lg p-4`;
 const subtleButtonClass =
   "cursor-pointer rounded border border-[rgba(96,165,250,0.28)] bg-[rgba(5,12,15,0.58)] font-mono font-bold tracking-[0.1em] text-[#8f9cac]";
 const accentButtonClass =
   "cursor-pointer rounded border border-[rgba(45,212,191,0.62)] bg-[rgba(45,212,191,0.08)] font-mono font-bold tracking-[0.1em] text-[#2dd4bf] shadow-[0_0_16px_rgba(45,212,191,0.08)]";
+const solidAccentBtn =
+  "cursor-pointer rounded bg-[linear-gradient(90deg,#2dd4bf,#22d3ee)] font-mono font-bold tracking-[0.14em] text-[#021011] shadow-[0_0_22px_rgba(45,212,191,0.26)]";
 
 const pageCopy = {
   mentors: {
@@ -28,65 +29,22 @@ const pageCopy = {
   gaps: {
     title: "Gap Reports",
     description:
-      "Blind spots generated from low-confidence mentor answers, ready for review, prioritization, and knowledge updates.",
+      "Identify blind spots and low-confidence answers from mentors to prioritize knowledge updates and improve answer quality.",
     eyebrow: "CONFIDENCE ORACLE",
   },
   earnings: {
     title: "Earnings",
     description:
-      "Royalty, curator reward, vesting, and platform fee mock data based on the README revenue flow.",
+      "Royalty, curator rewards, vesting, and platform fees across your mentors and packages.",
     eyebrow: "REVENUE FLOW",
   },
   security: {
     title: "Security Logs",
     description:
-      "Mock audit trail for encrypted storage, enclave inference, access checks, and e-sign attestation references.",
+      "Track encrypted storage, enclave inference, access checks, TEE attestations, and e-sign audit references across the network.",
     eyebrow: "TEE AUDIT TRAIL",
   },
 } satisfies Record<PageKind, { title: string; description: string; eyebrow: string }>;
-
-function StatCard({
-  label,
-  value,
-  detail,
-  boxed = true,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  boxed?: boolean;
-}) {
-  return (
-    <div className={boxed ? cardClass : ""}>
-      <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6b7280]">{label}</p>
-      <p className="mb-1 text-xl font-bold text-white">{value}</p>
-      <p className="text-[10px] leading-[1.5] text-[#6b7280]">{detail}</p>
-    </div>
-  );
-}
-
-function SectionTitle({ icon, title }: { icon: string; title: string }) {
-  return (
-    <div className="mb-4 flex items-center gap-2">
-      <span className="text-[#6b7280]">{icon}</span>
-      <h2 className="text-[13px] font-bold tracking-[0.05em] text-white">{title}</h2>
-    </div>
-  );
-}
-
-function StatusPill({ children, tone = "accent" }: { children: string; tone?: "accent" | "muted" | "warn" }) {
-  const classes = {
-    accent: "border-[rgba(45,212,191,0.3)] bg-[rgba(45,212,191,0.08)] text-[#2dd4bf]",
-    muted: "border-[#343840] bg-[#111317] text-[#9ca3af]",
-    warn: "border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] text-[#fbbf24]",
-  };
-
-  return (
-    <span className={`rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold tracking-[0.1em] ${classes[tone]}`}>
-      {children}
-    </span>
-  );
-}
 
 function MentorsView() {
   const mentors = [
@@ -139,9 +97,6 @@ function MentorsView() {
     REVIEW: "border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] text-[#fbbf24]",
     READY: "border-[rgba(45,212,191,0.3)] bg-[rgba(45,212,191,0.08)] text-[#2dd4bf]",
   };
-
-  const solidAccentBtn =
-    "cursor-pointer rounded bg-[linear-gradient(90deg,#2dd4bf,#22d3ee)] font-mono font-bold tracking-[0.14em] text-[#021011] shadow-[0_0_22px_rgba(45,212,191,0.26)]";
 
   const tagPill =
     "flex items-center gap-1 rounded border border-[rgba(96,165,250,0.12)] bg-[rgba(255,255,255,0.035)] px-2 py-0.5 text-[9px] text-[#66717f]";
@@ -735,123 +690,642 @@ function SharesView() {
 
 function GapsView() {
   const gaps = [
-    ["OSS licensing for foreign-owned PMA", "IndoRegulator_01", "High", "21 queries", "Needs new checklist"],
-    ["MiCA stablecoin reserve carve-out", "QuantAlpha_7", "Medium", "9 queries", "Source match weak"],
-    ["Proxy upgrade incident pattern", "CyberSec_V2", "Low", "5 queries", "Awaiting mentor review"],
+    ["OSS licensing for foreign-owned PMA", "IndoRegulator_01", "Compliance", "CRITICAL", "28%", "21", "2h ago", "High severity"],
+    ["MiCA stablecoin reserve carve-out", "QuantAlpha_7", "Regulation", "HIGH", "41%", "9", "4h ago", "High severity"],
+    ["Proxy upgrade incident pattern", "CyberSec_V2", "Security", "MEDIUM", "56%", "5", "6h ago", "Moderate severity"],
+    ["Cross-chain bridge risk heuristics", "ChainIntel_3", "Security", "LOW", "72%", "7", "8h ago", "Low severity"],
+    ["DAO treasury diversification models", "DeFiSage_01", "Finance", "LOW", "78%", "6", "10h ago", "Low severity"],
   ];
 
+  const priorityTone: Record<string, string> = {
+    CRITICAL: "border-red-500/40 bg-red-500/10 text-red-400",
+    HIGH: "border-amber-400/40 bg-amber-400/10 text-amber-300",
+    MEDIUM: "border-yellow-400/40 bg-yellow-400/10 text-yellow-300",
+    LOW: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
+  };
+
+  const severityColor: Record<string, string> = {
+    CRITICAL: "#fb7185",
+    HIGH: "#fb923c",
+    MEDIUM: "#facc15",
+    LOW: "#34d399",
+  };
+
   return (
-    <div className="grid grid-cols-[1fr_320px] gap-4">
-      <div className={cardClass}>
-        <SectionTitle icon="⚠" title="Blind Spot Queue" />
-        <div className="flex flex-col gap-3">
-          {gaps.map(([title, mentor, priority, count, note]) => (
-            <div key={title} className="rounded border border-[#242830] bg-[#101215] p-3">
-              <div className="mb-2 flex items-start justify-between gap-3">
-                <div>
-                  <p className="mb-1 text-xs font-bold text-white">{title}</p>
-                  <p className="text-[10px] text-[#6b7280]">{mentor} • {count} • {note}</p>
-                </div>
-                <StatusPill tone={priority === "High" ? "warn" : "muted"}>{priority.toUpperCase()}</StatusPill>
+    <div className="gaps-reference">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_0.8fr_1.08fr_1.4fr]">
+        {[
+          ["◎", "Total Open Gaps", "128", "↗ 18", "vs yesterday", "#2dd4bf"],
+          ["△", "Critical Priority", "24", "18.7% of total", "", "#fb7185"],
+          ["♧", "Avg Confidence Recovery", "+21.4%", "30d trend", "spark", "#2dd4bf"],
+          ["♧", "Pending Reviews", "17", "Needs attention", "", "#2dd4bf"],
+        ].map(([icon, label, value, detail, extra, color]) => (
+          <div key={label} className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="flex items-center gap-4">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-[20px]"
+                style={{
+                  borderColor: `${color}55`,
+                  backgroundColor: `${color}14`,
+                  color,
+                  boxShadow: `0 0 22px ${color}22`,
+                }}
+              >
+                {icon}
               </div>
-              <div className="h-2 rounded bg-[#0b0d0f]">
-                <div className="h-2 rounded bg-[#2dd4bf]" style={{ width: priority === "High" ? "78%" : priority === "Medium" ? "48%" : "24%" }} />
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8b95a3]">{label}</p>
+                <div className="flex items-end gap-4">
+                  <p className="text-[24px] font-bold leading-none text-white">{value}</p>
+                  {extra === "spark" ? (
+                    <svg viewBox="0 0 130 34" className="h-8 flex-1" fill="none">
+                      <path d="M0 28L10 25L18 16L28 20L38 8L48 18L58 11L68 19L78 15L88 4L98 16L108 18L118 13L130 4" stroke="#2dd4bf" strokeWidth="2" />
+                      <path d="M0 34L0 28L10 25L18 16L28 20L38 8L48 18L58 11L68 19L78 15L88 4L98 16L108 18L118 13L130 4L130 34Z" fill="#2dd4bf" opacity="0.14" />
+                    </svg>
+                  ) : (
+                    <span className={`text-[11px] font-bold ${label === "Total Open Gaps" ? "text-[#2dd4bf]" : "text-[#8b95a3]"}`}>{detail}</span>
+                  )}
+                </div>
+                {extra !== "spark" && extra && <p className="mt-1 text-[10px] text-[#707b89]">{extra}</p>}
+                {extra === "spark" && <p className="mt-1 text-[10px] text-[#707b89]">{detail}</p>}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-      <div className={cardClass}>
-        <SectionTitle icon="◎" title="Oracle Signals" />
-        {[
-          ["Retrieval match", "64%"],
-          ["Self-eval confidence", "71%"],
-          ["Source freshness", "39%"],
-          ["Mentor response SLA", "18h"],
-        ].map(([label, value]) => (
-          <div key={label} className="mb-3 flex items-center justify-between border-b border-[#1f2937] pb-2 text-[11px]">
-            <span className="text-[#6b7280]">{label}</span>
-            <span className="font-bold text-white">{value}</span>
           </div>
         ))}
-        <button className={`mt-2 w-full py-2 text-[10px] ${accentButtonClass}`}>REQUEST UPDATE</button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.95fr_0.95fr]">
+        <div className={`${panelClass} rounded-[7px] p-4`}>
+          <div className="mb-4">
+            <h2 className="mb-4 text-[13px] font-bold uppercase tracking-[0.08em] text-white">Priority Gap Queue</h2>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {[
+                  ["ALL", "128", "accent"],
+                  ["CRITICAL", "24", "critical"],
+                  ["IN REVIEW", "17", "warn"],
+                  ["RESOLVED", "87", "good"],
+                ].map(([label, count, tone]) => (
+                  <button
+                    key={label}
+                    className={`rounded border border-[rgba(96,165,250,0.18)] bg-[rgba(255,255,255,0.025)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                      tone === "accent"
+                        ? "text-[#2dd4bf]"
+                        : tone === "critical"
+                          ? "text-red-400"
+                          : tone === "warn"
+                            ? "text-amber-300"
+                            : "text-emerald-300"
+                    }`}
+                  >
+                    {label} <span className="ml-1 rounded bg-black/25 px-1">{count}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#586474]">SORT BY</span>
+                <button className={`${subtleButtonClass} px-3 py-2 text-[10px]`}>Priority (High → Low)⌄</button>
+                <button className={`${subtleButtonClass} px-3 py-2 text-[10px]`}>▽</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded border border-[rgba(96,165,250,0.14)]">
+            <div className="grid grid-cols-[1.75fr_0.7fr_0.65fr_0.65fr_0.5fr_0.65fr_0.8fr_0.78fr] gap-3 bg-[rgba(255,255,255,0.025)] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-[#586474]">
+              <span>Gap / Source</span><span>Category</span><span>Priority</span><span>Confidence</span><span>Queries</span><span>Last Updated</span><span>Severity</span><span>Actions</span>
+            </div>
+            {gaps.map(([title, mentor, category, priority, confidence, queries, updated, severity]) => {
+              const numericConfidence = Number(confidence.replace("%", ""));
+              return (
+                <div key={title} className="grid grid-cols-[1.75fr_0.7fr_0.65fr_0.65fr_0.5fr_0.65fr_0.8fr_0.78fr] items-center gap-3 border-t border-[rgba(96,165,250,0.12)] px-3 py-3 text-[10px]">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${priority === "CRITICAL" ? "border-red-500/35 bg-red-500/10 text-red-400" : priority === "HIGH" || priority === "MEDIUM" ? "border-yellow-400/35 bg-yellow-400/10 text-yellow-300" : "border-emerald-400/35 bg-emerald-400/10 text-emerald-300"}`}>△</span>
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-white">{title}</p>
+                      <p className="text-[#707b89]">{mentor}</p>
+                    </div>
+                  </div>
+                  <span className="w-fit rounded border border-[rgba(96,165,250,0.16)] bg-[rgba(255,255,255,0.05)] px-2 py-1 text-[9px] font-bold text-[#9ca3af]">{category}</span>
+                  <span className={`w-fit rounded border px-2 py-1 text-[9px] font-bold ${priorityTone[priority]}`}>{priority}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="relative h-9 w-9 shrink-0 rounded-full" style={{ background: `conic-gradient(${severityColor[priority]} ${numericConfidence * 3.6}deg, rgba(96,165,250,0.14) 0deg)` }}>
+                      <div className="absolute inset-[4px] flex items-center justify-center rounded-full bg-[#071014] text-[9px] font-bold text-white">{confidence}</div>
+                    </div>
+                  </div>
+                  <span className="font-bold text-white">{queries}</span>
+                  <span className="text-[#d1d5db]">{updated}</span>
+                  <div>
+                    <div className="mb-1 flex gap-1">
+                      {[0, 1, 2, 3, 4].map((bar) => (
+                        <span
+                          key={bar}
+                          className="h-1.5 w-4 rounded-full"
+                          style={{ backgroundColor: bar < (priority === "CRITICAL" ? 5 : priority === "HIGH" ? 4 : priority === "MEDIUM" ? 3 : 5) ? severityColor[priority] : "rgba(96,165,250,0.14)" }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-[#707b89]">{severity}</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button className={`${accentButtonClass} px-2 py-1 text-[8px]`}>OPEN REPORT</button>
+                    <button className="text-[9px] font-bold text-[#2dd4bf]">ASSIGN UPDATE</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-[10px] text-[#707b89]">
+            <span>Showing 1-5 of 128 gaps</span>
+            <div className="flex items-center gap-4">
+              <span>‹</span>
+              <span className="rounded border border-[#2dd4bf]/45 px-3 py-2 text-[#2dd4bf]">1</span>
+              <span>2</span>
+              <span>3</span>
+              <span>...</span>
+              <span>26</span>
+              <span>›</span>
+            </div>
+            <button className={`${subtleButtonClass} px-3 py-2 text-[10px]`}>5 / page ⌄</button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Oracle Signals</h2>
+                <span className="text-[#707b89]">⊙</span>
+              </div>
+              <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#707b89]">30D Trend</span>
+            </div>
+            {[
+              ["◎", "Retrieval Match", "64%"],
+              ["♧", "Self-Eval Confidence", "71%"],
+              ["♧", "Source Freshness", "39%"],
+              ["⌁", "Mentor Response SLA", "18h"],
+              ["✥", "Citation Coverage", "58%"],
+            ].map(([icon, label, value]) => (
+              <div key={label} className="mb-3 grid grid-cols-[22px_1fr_115px_42px_54px] items-center gap-2 text-[11px]">
+                <span className="text-[#9ca3af]">{icon}</span>
+                <span className="text-[#d1d5db]">{label}</span>
+                <div className="h-[5px] rounded-full bg-[rgba(96,165,250,0.14)]">
+                  <div className="h-[5px] rounded-full bg-[#2dd4bf]" style={{ width: value === "18h" ? "50%" : value }} />
+                </div>
+                <span className="text-right font-bold text-white">{value}</span>
+                <svg viewBox="0 0 54 18" className="h-4 w-[54px]" fill="none">
+                  <path d="M0 11L5 8L10 13L15 4L20 10L25 6L30 13L35 5L40 10L45 4L54 8" stroke="#2dd4bf" strokeWidth="1.2" />
+                </svg>
+              </div>
+            ))}
+            <button className={`mt-2 w-full py-2 text-[10px] ${accentButtonClass}`}>VIEW SIGNAL DETAILS</button>
+          </div>
+
+          <div className={`${panelClass} rounded-[7px] p-4`}>
+            <h2 className="mb-4 text-[13px] font-bold uppercase tracking-[0.08em] text-white">Recommended Actions</h2>
+            {[
+              ["Update IndoRegulator_01 knowledge base", "Resolve 21 critical queries", "CRITICAL", "Unassigned"],
+              ["Refresh MiCA regulatory sources", "Improve source freshness", "HIGH", "QuantAlpha_7"],
+              ["Review proxy incident runbook", "Add recent attack patterns", "MEDIUM", "CyberSec_V2"],
+              ["Expand cross-chain risk dataset", "Add new bridge exploit data", "LOW", "ChainIntel_3"],
+            ].map(([title, detail, priority, owner]) => (
+              <div key={title} className="mb-2 grid grid-cols-[24px_1fr_auto] items-center gap-3 rounded border border-[rgba(96,165,250,0.1)] bg-[rgba(255,255,255,0.025)] px-3 py-2">
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${priorityTone[priority]}`}>△</span>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-bold text-white">{title}</p>
+                  <p className="truncate text-[9px] text-[#707b89]">{detail}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`rounded border px-2 py-0.5 text-[8px] font-bold ${priorityTone[priority]}`}>{priority}</span>
+                  <p className="mt-1 text-[9px] text-[#707b89]">{owner}</p>
+                </div>
+              </div>
+            ))}
+            <button className={`mt-2 w-full py-2 text-[10px] ${accentButtonClass}`}>VIEW ALL ACTIONS (17) →</button>
+          </div>
+
+          <div className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Recent Activity</h2>
+              <button className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2dd4bf]">View all</button>
+            </div>
+            {[
+              ["IndoRegulator_01 gap marked as In Review", "2h ago"],
+              ["MiCA stablecoin sources refreshed", "4h ago"],
+              ["CyberSec_V2 update published", "6h ago"],
+              ["ChainIntel_3 assigned 3 new gaps", "8h ago"],
+            ].map(([title, time]) => (
+              <div key={title} className="mb-2 flex items-center justify-between gap-3 text-[10px]">
+                <span className="truncate text-[#d1d5db]">⊙ {title}</span>
+                <span className="shrink-0 text-[#707b89]">{time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 function EarningsView() {
+  const statCards = [
+    ["◎", "Gross Revenue", "12,840 OG", "Subscription + pay-per-query", "▲ 12.4% vs last 30 days"],
+    ["♕", "Mentor Royalty", "7,704 OG", "Lifetime royalty share", "▲ 9.8% vs last 30 days"],
+    ["♣", "Curator Pool", "3,210 OG", "Pro-rata usage rewards", "▲ 7.2% vs last 30 days"],
+    ["▱", "Platform Fee", "1,926 OG", "Operational fee allocation", "▲ 5.4% vs last 30 days"],
+  ];
+
+  const vestingRows = [
+    ["IndoRegulator_01", "Regulatory Watchdog", "18 days", "Jun 18, 2026", "2,910 OG", "65%"],
+    ["ExportOps_APAC", "APAC Trade Intelligence", "24 days", "Jun 24, 2026", "1,108 OG", "42%"],
+    ["DeFiTax_Advisor", "Defi Tax Optimizer", "7 days", "Jun 7, 2026", "842 OG", "83%"],
+    ["AuditGuardian_Pro", "Onchain Audit Monitor", "36 days", "Jul 6, 2026", "654 OG", "28%"],
+  ];
+
   return (
-    <>
-      <div className="mb-4 grid grid-cols-4 gap-4">
-        <StatCard label="Gross Revenue" value="12,840 0G" detail="Subscription plus pay-per-query mock revenue." />
-        <StatCard label="Mentor Royalty" value="7,704 0G" detail="Lifetime royalty share before vesting." />
-        <StatCard label="Curator Pool" value="3,210 0G" detail="Pro-rata usage reward distribution." />
-        <StatCard label="Platform Fee" value="1,926 0G" detail="Operational fee mock allocation." />
+    <div className="earnings-reference">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {statCards.map(([icon, label, value, detail, trend]) => (
+          <div key={label} className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#2dd4bf]/35 bg-[#2dd4bf]/10 text-[22px] text-[#2dd4bf] shadow-[0_0_24px_rgba(45,212,191,0.16)]">
+                {icon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8b95a3]">{label}</p>
+                <p className="text-[22px] font-bold leading-none text-white">{value}</p>
+                <div className="mt-2 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] text-[#707b89]">{detail}</p>
+                    <p className="mt-1 text-[9px] font-bold text-[#2dd4bf]">{trend}</p>
+                  </div>
+                  <svg viewBox="0 0 120 44" className="h-11 w-[88px] shrink-0" fill="none">
+                    <path d="M0 30L8 26L16 34L24 31L32 22L40 18L48 12L56 16L64 28L72 20L80 17L88 7L96 3L104 12L112 24L120 15" stroke="#2dd4bf" strokeWidth="2" />
+                    <path d="M0 44L0 30L8 26L16 34L24 31L32 22L40 18L48 12L56 16L64 28L72 20L80 17L88 7L96 3L104 12L112 24L120 15L120 44Z" fill="#2dd4bf" opacity="0.18" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className={cardClass}>
-          <SectionTitle icon="◎" title="Vesting Queue" />
-          {[
-            ["IndoRegulator_01", "2,910 0G", "18 days"],
-            ["ExportOps_APAC", "1,108 0G", "24 days"],
-            ["DeFiTax_Advisor", "842 0G", "7 days"],
-          ].map(([name, amount, lock]) => (
-            <div key={name} className="mb-3 flex items-center justify-between rounded border border-[#242830] bg-[#101215] p-3">
+
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.86fr_0.42fr]">
+        <div className={`${panelClass} rounded-[7px] p-4`}>
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-[#8b95a3]">↯</span>
+              <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Revenue Overview</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {["1W", "1M", "3M", "ALL"].map((range) => (
+                <button key={range} className={`rounded border border-[rgba(96,165,250,0.14)] px-2.5 py-1.5 text-[9px] font-bold ${range === "1M" ? "bg-[#2dd4bf]/10 text-[#2dd4bf]" : "text-[#707b89]"}`}>
+                  {range}
+                </button>
+              ))}
+              <button className={`${subtleButtonClass} px-2 py-1 text-[10px]`}>▣</button>
+            </div>
+          </div>
+          <svg viewBox="0 0 700 260" className="h-[260px] w-full" fill="none" preserveAspectRatio="none">
+            {[42, 84, 126, 168, 210].map((y) => (
+              <line key={y} x1="42" x2="602" y1={y} y2={y} stroke="rgba(96,165,250,0.12)" />
+            ))}
+            {["0G", "1.6K", "1.2K", "800", "400", "0"].map((label, i) => (
+              <text key={label} x="0" y={28 + i * 42} fill="#707b89" fontSize="11">{label}</text>
+            ))}
+            <path d="M42 190L60 150L78 142L96 160L116 176L136 184L156 178L176 190L196 154L216 104L236 122L256 98L276 91L296 80L316 42L336 24L356 52L376 39L396 31L416 18L436 62L456 106L476 129L496 151L516 132L536 115L556 108L576 98L596 135L616 101L636 87L656 76L676 113L696 42" stroke="#2dd4bf" strokeWidth="3" />
+            <path d="M42 232L42 190L60 150L78 142L96 160L116 176L136 184L156 178L176 190L196 154L216 104L236 122L256 98L276 91L296 80L316 42L336 24L356 52L376 39L396 31L416 18L436 62L456 106L476 129L496 151L516 132L536 115L556 108L576 98L596 135L616 101L636 87L656 76L676 113L696 42L696 232Z" fill="url(#earningArea)" />
+            <circle cx="696" cy="42" r="5" fill="#2dd4bf" />
+            <text x="616" y="38" fill="#2dd4bf" fontSize="11" fontWeight="700">CURRENT</text>
+            <text x="616" y="62" fill="white" fontSize="13" fontWeight="700">12,840 OG</text>
+            <text x="616" y="84" fill="#2dd4bf" fontSize="11" fontWeight="700">▲ 12.4%</text>
+            {["Apr 27", "May 4", "May 11", "May 18", "May 25", "May 31"].map((label, index) => (
+              <text key={label} x={46 + index * 112} y="252" fill="#707b89" fontSize="11">{label}</text>
+            ))}
+            <defs>
+              <linearGradient id="earningArea" x1="360" x2="360" y1="18" y2="232" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#2dd4bf" stopOpacity="0.32" />
+                <stop offset="1" stopColor="#2dd4bf" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div className={`${panelClass} rounded-[7px] p-4`}>
+          <div className="mb-5 flex items-center gap-2">
+            <span className="text-[#8b95a3]">◔</span>
+            <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Revenue Split</h2>
+          </div>
+          <div className="grid items-center gap-5 md:grid-cols-[170px_1fr]">
+            <div className="relative h-[170px] w-[170px] rounded-full bg-[conic-gradient(#2dd4bf_0_60%,#67e8f9_60%_85%,#475569_85%_100%)] p-[28px]">
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-[#071014] text-center">
+                <span className="text-[18px] font-bold text-white">12,840</span>
+                <span className="text-[13px] font-bold text-white">OG</span>
+                <span className="mt-1 text-[9px] uppercase tracking-[0.12em] text-[#707b89]">Total</span>
+              </div>
+            </div>
+            <div>
+              {[
+                ["#2dd4bf", "Mentor royalty", "7,704 OG", "60%"],
+                ["#67e8f9", "Curator rewards", "3,210 OG", "25%"],
+                ["#64748b", "Platform fee", "1,926 OG", "15%"],
+              ].map(([color, label, value, pct]) => (
+                <div key={label} className="grid grid-cols-[14px_1fr_auto] items-center gap-3 border-b border-[rgba(96,165,250,0.14)] py-3 last:border-b-0">
+                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
+                  <span>
+                    <span className="block text-[11px] text-[#d1d5db]">{label}</span>
+                    <span className="text-[10px] text-[#707b89]">{value}</span>
+                  </span>
+                  <span className="text-[12px] font-bold text-white">{pct}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-5 text-[10px] text-[#707b89]">Distribution based on protocol rules and usage.</p>
+        </div>
+
+        <div className={`${panelClass} overflow-hidden rounded-[7px]`}>
+          <div className="border-b border-[#2dd4bf]/30 bg-[rgba(45,212,191,0.035)] p-4">
+            <div className="mb-8 flex items-center gap-2 text-[#2dd4bf]">
+              <span className="text-[18px]">▣</span>
+              <h2 className="text-[12px] font-bold uppercase tracking-[0.12em]">Claimable Rewards</h2>
+            </div>
+            <p className="text-center text-[26px] font-bold text-white">842 OG</p>
+            <p className="mt-3 text-center text-[11px] text-[#d1d5db]">Available to claim</p>
+          </div>
+          <div className="p-4">
+            <p className="mb-5 text-center text-[11px] leading-[1.6] text-[#8b95a3]">Includes vested allocations ready for withdrawal.</p>
+            <button className={`flex w-full items-center justify-center gap-2 py-2.5 text-[10px] ${solidAccentBtn}`}>CLAIM REWARDS <span className="text-base leading-none">›</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className={`${panelClass} rounded-[7px] p-4`}>
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-[#8b95a3]">▢</span>
+            <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Vesting Queue</h2>
+          </div>
+          <div className="grid grid-cols-[1.4fr_0.7fr_0.7fr_0.8fr_0.45fr] gap-3 border-b border-[rgba(96,165,250,0.14)] pb-2 text-[9px] font-bold uppercase tracking-[0.12em] text-[#586474]">
+            <span>Mentor / Package</span><span>Unlocks In</span><span>Amount</span><span>Progress</span><span>Claim Date</span>
+          </div>
+          {vestingRows.map(([mentor, subtitle, unlock, date, amount, progress], index) => (
+            <div key={mentor} className="grid grid-cols-[1.4fr_0.7fr_0.7fr_0.8fr_0.45fr] items-center gap-3 border-b border-[rgba(96,165,250,0.12)] py-3 text-[11px]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#2dd4bf]/35 bg-[#2dd4bf]/10 text-[#2dd4bf]">{["◈", "⬢", "⬡", "⛨"][index]}</div>
+                <div>
+                  <p className="font-bold text-white">{mentor}</p>
+                  <p className="text-[10px] text-[#707b89]">{subtitle}</p>
+                </div>
+              </div>
               <div>
-                <p className="text-xs font-bold text-white">{name}</p>
-                <p className="text-[10px] text-[#6b7280]">vesting unlock in {lock}</p>
+                <p className="font-bold text-white">{unlock}</p>
+                <p className="text-[10px] text-[#707b89]">{date}</p>
               </div>
-              <p className="text-xs font-bold text-[#2dd4bf]">{amount}</p>
+              <p className="font-bold text-white">{amount}</p>
+              <div className="flex items-center gap-3">
+                <div className="h-[6px] flex-1 rounded-full bg-[rgba(96,165,250,0.14)]">
+                  <div className="h-[6px] rounded-full bg-[#2dd4bf]" style={{ width: progress }} />
+                </div>
+                <span className="text-[10px] text-[#d1d5db]">{progress}</span>
+              </div>
+              <span className="text-center text-[#707b89]">-</span>
             </div>
           ))}
+          <button className="mt-4 flex w-full items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#2dd4bf]">VIEW ALL VESTING <span>›</span></button>
         </div>
-        <div className={cardClass}>
-          <SectionTitle icon="↯" title="Revenue Split" />
+
+        <div className={`${panelClass} rounded-[7px] p-4`}>
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-[#8b95a3]">⌁</span>
+            <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Recent Payout Activity</h2>
+          </div>
+          <div className="grid grid-cols-[1fr_1fr_0.6fr_0.7fr] gap-3 border-b border-[rgba(96,165,250,0.14)] pb-2 text-[9px] font-bold uppercase tracking-[0.12em] text-[#586474]">
+            <span>Event</span><span>Source</span><span>Time</span><span className="text-right">Amount</span>
+          </div>
           {[
-            ["Mentor royalty", "60%"],
-            ["Curator rewards", "25%"],
-            ["Platform fee", "15%"],
-          ].map(([label, value]) => (
-            <div key={label} className="mb-4">
-              <div className="mb-1 flex justify-between text-[10px]">
-                <span className="text-[#6b7280]">{label}</span>
-                <span className="font-bold text-white">{value}</span>
+            ["♕", "Mentor Royalty", "IndoRegulator_01", "2h ago", "+412 OG"],
+            ["♧", "Curator Reward", "ExportOps_APAC", "5h ago", "+231 OG"],
+            ["♕", "Mentor Royalty", "DeFiTax_Advisor", "1d ago", "+318 OG"],
+            ["◎", "Platform Fee Allocation", "Protocol", "1d ago", "+147 OG"],
+            ["♧", "Curator Reward", "AuditGuardian_Pro", "2d ago", "+164 OG"],
+          ].map(([icon, event, source, time, amount]) => (
+            <div key={`${event}-${source}-${time}`} className="grid grid-cols-[1fr_1fr_0.6fr_0.7fr] items-center gap-3 border-b border-[rgba(96,165,250,0.12)] py-3 text-[11px]">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#2dd4bf]/30 bg-[#2dd4bf]/10 text-[#2dd4bf]">{icon}</span>
+                <span className="text-[#d1d5db]">{event}</span>
               </div>
-              <div className="h-2 rounded bg-[#0b0d0f]">
-                <div className="h-2 rounded bg-[#2dd4bf]" style={{ width: value }} />
-              </div>
+              <span className="text-[#8b95a3]">{source}</span>
+              <span className="text-[#8b95a3]">{time}</span>
+              <span className="text-right font-bold text-[#2dd4bf]">{amount}</span>
             </div>
           ))}
+          <button className="mt-4 flex w-full items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#2dd4bf]">VIEW ALL ACTIVITY <span>›</span></button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
 function SecurityView() {
   const logs = [
-    ["TEE_ATTESTED", "IndoRegulator_01 query session", "0x7F...91A2", "2 min ago"],
-    ["E_SIGN_REF", "Mentor consent package attached", "ESG-4491", "18 min ago"],
-    ["STORAGE_COMMIT", "0G Log archival hash pinned", "0xA1...CC04", "41 min ago"],
-    ["ACCESS_CHECK", "Subscriber pass validated", "0x09...88FE", "1 hr ago"],
-    ["INFT_TRANSFER_DRYRUN", "Ownership handoff proof simulated", "0x44...D902", "3 hr ago"],
+    ["⛨", "TEE_ATTESTED", "IndoRegulator_01 query session", "0x7F...91A2", "NODE_01", "VERIFIED", "2 min ago"],
+    ["✎", "E_SIGN_REF", "Mentor consent package attached", "ESG-4491", "ESIGN_SVC", "INFO", "18 min ago"],
+    ["▱", "STORAGE_COMMIT", "0G log archival hash pinned", "0xA1...CC04", "STORAGE_N1", "INFO", "41 min ago"],
+    ["▣", "ACCESS_CHECK", "Subscriber pass validated", "0x09...88FE", "ACCESS_SVC", "LOW", "1 hr ago"],
+    ["⇄", "INFT_TRANSFER_DRYRUN", "Ownership handoff proof simulated", "0x44...D902", "INFT_SVC", "LOW", "3 hr ago"],
+    ["⬡", "ENCLAVE_BOOT", "TEE enclave boot verified", "0x2B...7EF1", "ENCLAVE_N1", "VERIFIED", "3 hr ago"],
+    ["▤", "POLICY_UPDATE", "Access policy rule set updated", "POL-7731", "POLICY_SVC", "MEDIUM", "6 hr ago"],
+    ["⌁", "KEY_ROTATION", "Data encryption key rotated", "0x8C...AA31", "KEY_MGR", "INFO", "9 hr ago"],
   ];
 
+  const severityClass: Record<string, string> = {
+    VERIFIED: "border-[#2dd4bf]/35 bg-[#2dd4bf]/10 text-[#2dd4bf]",
+    INFO: "border-sky-400/35 bg-sky-400/10 text-sky-300",
+    LOW: "border-emerald-400/35 bg-emerald-400/10 text-emerald-300",
+    MEDIUM: "border-yellow-400/35 bg-yellow-400/10 text-yellow-300",
+    HIGH: "border-red-400/35 bg-red-400/10 text-red-300",
+  };
+
   return (
-    <div className={cardClass}>
-      <SectionTitle icon="⛨" title="Audit Event Stream" />
-      <div className="grid grid-cols-[0.8fr_1.3fr_0.8fr_0.6fr] gap-3 border-b border-[#242830] pb-2 text-[9px] font-bold tracking-[0.12em] text-[#4b5563]">
-        <span>EVENT</span><span>DETAIL</span><span>PROOF</span><span>TIME</span>
+    <div className="security-reference">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["⛨", "Audit Events", "12.8K", "↑ 18.4% vs last 24h", "#2dd4bf"],
+          ["⛨", "TEE Verified", "99.2%", "↑ 0.6% vs last 24h", "#2dd4bf"],
+          ["△", "Failed Checks", "7", "↓ -12.5% vs last 24h", "#ef4444"],
+          ["◔", "Avg Response SLA", "142ms", "↓ -8.7% vs last 24h", "#2dd4bf"],
+        ].map(([icon, label, value, trend, color]) => (
+          <div key={label} className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded border text-[18px]"
+                style={{ borderColor: `${color}55`, backgroundColor: `${color}14`, color }}
+              >
+                {icon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8b95a3]">{label}</p>
+                <p className="text-[24px] font-bold leading-none text-white">{value}</p>
+                <div className="mt-2 flex items-end justify-between gap-4">
+                  <p className="text-[10px] font-bold" style={{ color }}>{trend}</p>
+                  <svg viewBox="0 0 100 42" className="h-10 w-[90px] shrink-0" fill="none">
+                    <path d="M0 34L8 30L15 20L23 26L31 12L39 18L47 4L55 7L63 25L71 13L79 21L87 11L95 19L100 8" stroke={color} strokeWidth="2" />
+                    <path d="M0 42L0 34L8 30L15 20L23 26L31 12L39 18L47 4L55 7L63 25L71 13L79 21L87 11L95 19L100 8L100 42Z" fill={color} opacity="0.16" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-      {logs.map(([event, detail, proof, time]) => (
-        <div key={`${event}-${time}`} className="grid grid-cols-[0.8fr_1.3fr_0.8fr_0.6fr] items-center gap-3 border-b border-[#1f2937] py-3 text-[11px]">
-          <span className="font-bold text-[#2dd4bf]">{event}</span>
-          <span className="text-white">{detail}</span>
-          <span className="text-[#9ca3af]">{proof}</span>
-          <span className="text-[#6b7280]">{time}</span>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.75fr_0.65fr]">
+        <div className={`${panelClass} rounded-[7px] p-4`}>
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-[#8b95a3]">⛨</span>
+            <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-white">Audit Event Stream</h2>
+          </div>
+
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              {["ALL", "TEE", "ACCESS", "STORAGE", "E-SIGN", "ALERTS"].map((tab) => (
+                <button
+                  key={tab}
+                  className={`rounded border px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                    tab === "ALL"
+                      ? "border-[#2dd4bf]/50 bg-[#2dd4bf]/10 text-[#2dd4bf]"
+                      : "border-[rgba(96,165,250,0.18)] bg-[rgba(255,255,255,0.025)] text-[#8b95a3]"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3">
+              <button className={`${subtleButtonClass} px-3 py-2 text-[10px]`}>▽ All Sources⌄</button>
+              <button className={`${subtleButtonClass} px-3 py-2 text-[10px]`}>Sort: Newest⌄</button>
+              <button className={`${subtleButtonClass} px-3 py-2 text-[10px]`}>☷</button>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded border border-[rgba(96,165,250,0.12)]">
+            <div className="grid grid-cols-[1fr_1.55fr_0.78fr_0.72fr_0.66fr_0.65fr_0.56fr] gap-3 bg-[rgba(255,255,255,0.025)] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-[#586474]">
+              <span>Event</span><span>Detail</span><span>Proof</span><span>Source</span><span>Severity</span><span>Time</span><span>Actions</span>
+            </div>
+            {logs.map(([icon, event, detail, proof, source, severity, time]) => (
+              <div key={`${event}-${time}`} className="grid grid-cols-[1fr_1.55fr_0.78fr_0.72fr_0.66fr_0.65fr_0.56fr] items-center gap-3 border-t border-[rgba(96,165,250,0.12)] px-3 py-3 text-[10px]">
+                <span className="flex items-center gap-2 font-bold text-[#2dd4bf]"><span>{icon}</span>{event}</span>
+                <span className="truncate text-[#d1d5db]">{detail}</span>
+                <span className="text-[#8b95a3]">{proof}</span>
+                <span className="text-[#8b95a3]">{source}</span>
+                <span className={`w-fit rounded border px-2 py-1 text-[8px] font-bold ${severityClass[severity]}`}>{severity}</span>
+                <span className="text-[#8b95a3]">{time}</span>
+                <span className="flex items-center gap-2">
+                  <button className="rounded border border-[#2dd4bf]/35 px-2 py-1 text-[#2dd4bf]">⊙</button>
+                  <button className="rounded border border-[#2dd4bf]/35 px-2 py-1 text-[#2dd4bf]">⌁</button>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-[10px] text-[#8b95a3]">
+            <span>Showing 1 to 10 of 234 events</span>
+            <div className="flex items-center gap-3">
+              <span className="rounded border border-[rgba(96,165,250,0.18)] px-3 py-2">‹</span>
+              <span className="rounded border border-[#2dd4bf]/45 bg-[#2dd4bf]/20 px-3 py-2 text-[#2dd4bf]">1</span>
+              <span className="rounded border border-[rgba(96,165,250,0.18)] px-3 py-2">2</span>
+              <span className="rounded border border-[rgba(96,165,250,0.18)] px-3 py-2">3</span>
+              <span>...</span>
+              <span className="rounded border border-[rgba(96,165,250,0.18)] px-3 py-2">24</span>
+              <span className="rounded border border-[rgba(96,165,250,0.18)] px-3 py-2">›</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span>Rows per page:</span>
+              <button className={`${subtleButtonClass} px-4 py-2 text-[10px]`}>10⌄</button>
+            </div>
+          </div>
         </div>
-      ))}
+
+        <div className="flex flex-col gap-4">
+          <div className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[#2dd4bf]">⌁</span>
+                <h2 className="text-[13px] font-bold tracking-[0.05em] text-white">Security Signals</h2>
+              </div>
+              <button className="text-[10px] font-bold text-[#2dd4bf]">View All</button>
+            </div>
+            {[
+              ["TEE Health", "99.3%"],
+              ["Storage Integrity", "98.7%"],
+              ["Access Compliance", "97.6%"],
+              ["Signature Coverage", "96.1%"],
+              ["Latency Trend (p95)", "142ms"],
+            ].map(([label, value]) => (
+              <div key={label} className="mb-3 grid grid-cols-[1fr_120px_42px] items-center gap-3 text-[10px]">
+                <span className="text-[#d1d5db]">{label}</span>
+                <div className="h-[5px] rounded-full bg-[rgba(96,165,250,0.16)]">
+                  <div className="h-[5px] rounded-full bg-[#2dd4bf]" style={{ width: value === "142ms" ? "82%" : value }} />
+                </div>
+                <span className="text-right font-bold text-white">{value}</span>
+              </div>
+            ))}
+            <div className="mt-3 flex justify-between text-[9px] text-[#707b89]">
+              <span>0%</span><span>50%</span><span>100%</span>
+            </div>
+          </div>
+
+          <div className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-red-400">△</span>
+                <h2 className="text-[13px] font-bold tracking-[0.05em] text-white">Critical Alerts</h2>
+              </div>
+              <button className="text-[10px] font-bold text-[#2dd4bf]">View All</button>
+            </div>
+            {[
+              ["Failed access check spike", "HIGH", "ACCESS_SVC"],
+              ["Storage integrity drift detected", "MEDIUM", "STORAGE_N1"],
+              ["Signature coverage below 97%", "MEDIUM", "ESIGN_SVC"],
+              ["Enclave uptime below threshold", "LOW", "ENCLAVE_N1"],
+            ].map(([title, severity, source]) => (
+              <div key={title} className="mb-3 grid grid-cols-[22px_1fr_auto_auto] items-center gap-2 text-[10px]">
+                <span className={severity === "HIGH" ? "text-red-400" : severity === "MEDIUM" ? "text-yellow-300" : "text-emerald-300"}>△</span>
+                <span className="truncate text-[#d1d5db]">{title}</span>
+                <span className={`rounded border px-2 py-0.5 text-[8px] font-bold ${severityClass[severity]}`}>{severity}</span>
+                <span className="text-[#8b95a3]">{source}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className={`${panelClass} rounded-[7px] p-4`}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[#2dd4bf]">☷</span>
+                <h2 className="text-[13px] font-bold tracking-[0.05em] text-white">Recent Activity</h2>
+              </div>
+              <button className="text-[10px] font-bold text-[#2dd4bf]">View All</button>
+            </div>
+            <div className="relative pl-4">
+              <div className="absolute left-[5px] top-2 h-[112px] w-px bg-[#2dd4bf]/50" />
+              {[
+                ["TEE attestation verified for NODE_01", "2 min ago"],
+                ["Mentor consent package signed", "18 min ago"],
+                ["Storage commit successful", "41 min ago"],
+                ["Subscriber access validated", "1 hr ago"],
+                ["Policy rule set updated", "6 hr ago"],
+              ].map(([title, time]) => (
+                <div key={title} className="relative mb-4 flex items-center justify-between gap-3 text-[10px]">
+                  <span className="absolute -left-[14px] h-3 w-3 rounded-full bg-[#2dd4bf] shadow-[0_0_12px_rgba(45,212,191,0.6)]" />
+                  <span className="truncate text-[#d1d5db]">{title}</span>
+                  <span className="shrink-0 text-[#8b95a3]">{time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
