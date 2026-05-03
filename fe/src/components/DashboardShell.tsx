@@ -1,7 +1,7 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ReactNode } from "react";
+import { ReactNode, useRef, useState } from "react";
 
 import Dither from "@/components/Dither";
 import MarketplaceSidebar from "@/components/MarketplaceSidebar";
@@ -11,6 +11,21 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ children }: DashboardShellProps) {
+  const [isScrollbarVisible, setIsScrollbarVisible] = useState(false);
+  const scrollbarTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+
+  function handleMainScroll() {
+    setIsScrollbarVisible(true);
+
+    if (scrollbarTimeoutRef.current) {
+      window.clearTimeout(scrollbarTimeoutRef.current);
+    }
+
+    scrollbarTimeoutRef.current = window.setTimeout(() => {
+      setIsScrollbarVisible(false);
+    }, 900);
+  }
+
   return (
     <div className="relative isolate flex h-screen flex-col gap-4 overflow-hidden bg-[#0b0d0f] p-4 font-mono text-[#d1d5db]">
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-95">
@@ -111,7 +126,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
       <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
         <MarketplaceSidebar />
-        <main className="dashboard-content min-h-0 flex-1 overflow-y-auto rounded-lg border border-[#2a2d32] bg-[#050607]/95 p-6 shadow-2xl shadow-black/30">
+        <main
+          className={`dashboard-content min-h-0 flex-1 overflow-y-auto rounded-lg border border-[#2a2d32] bg-[#050607]/95 p-6 shadow-2xl shadow-black/30 ${
+            isScrollbarVisible ? "dashboard-content--scrolling" : ""
+          }`}
+          onScroll={handleMainScroll}
+        >
           {children}
         </main>
       </div>
