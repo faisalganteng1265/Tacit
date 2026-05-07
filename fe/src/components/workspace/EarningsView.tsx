@@ -3,12 +3,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useReadContracts, useWriteContract } from "wagmi";
 
-import { formatOg, useMentorClaimable, useMentors, useVestingProgress } from "@/hooks/useMarketplace";
+import { LIVE_REFETCH_INTERVAL_MS, formatOg, useMentorClaimable, useMentors, useVestingProgress } from "@/hooks/useMarketplace";
 import { hasMarketplaceAddress, MARKETPLACE_ADDRESS, marketplaceAbi } from "@/lib/contracts";
 
 import { subtleButtonClass, solidAccentBtn } from "./shared";
 
 const panelClass = "border border-[rgba(96,165,250,0.24)] bg-black";
+
+type PayoutEvent = {
+  mentorId: number;
+  amount: bigint;
+  txHash: string;
+  blockNumber: bigint;
+};
 
 export default function EarningsView() {
   const { address } = useAccount();
@@ -25,7 +32,12 @@ export default function EarningsView() {
       functionName: "getMentorClaimable" as const,
       args: [BigInt(mentor.tokenId)],
     })),
-    query: { enabled: myMentors.length > 0 && hasMarketplaceAddress },
+    query: {
+      enabled: myMentors.length > 0 && hasMarketplaceAddress,
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
+    },
   });
 
   const totalClaimable = claimableResults
@@ -36,28 +48,31 @@ export default function EarningsView() {
   const totalQueries = myMentors.reduce((sum, m) => sum + m.totalQueries, 0);
 
   // Read MentorRoyaltyClaimed events for current user's mentors
-  const { data: payoutEvents = [] } = useQuery({
+  const { data: payoutEvents = [] } = useQuery<PayoutEvent[]>({
     queryKey: ["payout-events", address, MARKETPLACE_ADDRESS],
     enabled: Boolean(publicClient && address && hasMarketplaceAddress),
+    refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
+    staleTime: 4_000,
     queryFn: async () => {
       if (!publicClient || !address) return [];
       const currentBlock = await publicClient.getBlockNumber();
       const fromBlock = currentBlock > BigInt(100_000) ? currentBlock - BigInt(100_000) : BigInt(0);
       const logs = await publicClient.getLogs({
         address: MARKETPLACE_ADDRESS,
-        event: marketplaceAbi[2] as never, // MentorRoyaltyClaimed event
+        event: marketplaceAbi[2],
         fromBlock,
         toBlock: "latest",
       });
       return logs
-        .filter((log: any) => log.args?.mentor?.toLowerCase() === address.toLowerCase())
-        .map((log: any) => ({
+        .filter((log) => log.args.mentor?.toLowerCase() === address.toLowerCase())
+        .map((log) => ({
           mentorId: Number(log.args?.mentorId ?? 0),
           amount: (log.args?.amount as bigint) ?? BigInt(0),
           txHash: log.transactionHash as string,
           blockNumber: log.blockNumber as bigint,
         }))
-        .sort((a: any, b: any) => Number(b.blockNumber - a.blockNumber));
+        .sort((a, b) => Number(b.blockNumber - a.blockNumber));
     },
   });
 
@@ -170,10 +185,10 @@ export default function EarningsView() {
             </div>
             <div>
               {[
-                ["#2dd4bf", "Mentor royalty", "60%", "60%"],
-                ["#67e8f9", "Curator rewards", "25%", "25%"],
-                ["#64748b", "Platform fee", "15%", "15%"],
-              ].map(([color, label, value, pct]) => (
+                ["#2dd4bf", "Mentor royalty", "60%"],
+                ["#67e8f9", "Curator rewards", "25%"],
+                ["#64748b", "Platform fee", "15%"],
+              ].map(([color, label, pct]) => (
                 <div key={label} className="grid grid-cols-[14px_1fr_auto] items-center gap-3 border-b border-[rgba(96,165,250,0.14)] py-3 last:border-b-0">
                   <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
                   <span>

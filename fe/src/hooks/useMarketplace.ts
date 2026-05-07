@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { formatEther, type Address } from "viem";
 import { usePublicClient, useReadContract } from "wagmi";
 
@@ -16,6 +16,14 @@ import {
   inftAbi,
   marketplaceAbi,
 } from "@/lib/contracts";
+
+export const LIVE_REFETCH_INTERVAL_MS = 6_000;
+const liveQueryOptions = {
+  refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+  refetchIntervalInBackground: false,
+  placeholderData: keepPreviousData,
+  staleTime: 4_000,
+} as const;
 
 export type MentorMeta = {
   tokenId: number;
@@ -72,6 +80,7 @@ export function useMentors() {
   return useQuery({
     queryKey: ["mentors", publicClient?.chain?.id, MARKETPLACE_ADDRESS, INFT_ADDRESS],
     enabled: Boolean(publicClient && hasMarketplaceAddress && hasInftAddress),
+    ...liveQueryOptions,
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();
@@ -124,6 +133,9 @@ export function useShareBalance(mentorId?: number, user?: Address) {
     args: mentorId === undefined || !user ? undefined : [BigInt(mentorId), user],
     query: {
       enabled: Boolean((splitContractEnabled || hasMarketplaceAddress) && mentorId !== undefined && user),
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
     },
   });
 }
@@ -137,6 +149,9 @@ export function useSharePrice(mentorId?: number) {
     args: mentorId === undefined ? undefined : [BigInt(mentorId)],
     query: {
       enabled: Boolean((splitContractEnabled || hasMarketplaceAddress) && mentorId !== undefined),
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
     },
   });
 }
@@ -149,6 +164,9 @@ export function usePendingCuratorRewards(mentorId?: number, user?: Address) {
     args: mentorId === undefined || !user ? undefined : [BigInt(mentorId), user],
     query: {
       enabled: Boolean(hasMarketplaceAddress && mentorId !== undefined && user),
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
     },
   });
 }
@@ -161,6 +179,9 @@ export function useMentorClaimable(mentorId?: number) {
     args: mentorId === undefined ? undefined : [BigInt(mentorId)],
     query: {
       enabled: Boolean(hasMarketplaceAddress && mentorId !== undefined),
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
     },
   });
 }
@@ -173,6 +194,9 @@ export function useVestingProgress(mentorId?: number) {
     args: mentorId === undefined ? undefined : [BigInt(mentorId)],
     query: {
       enabled: Boolean(hasMarketplaceAddress && mentorId !== undefined),
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
     },
   });
 }
@@ -181,6 +205,7 @@ export function useMarketAccess(tokenId?: number, userAddress?: Address) {
   return useQuery({
     queryKey: ["market-access", tokenId, userAddress],
     enabled: tokenId !== undefined && Boolean(userAddress),
+    ...liveQueryOptions,
     queryFn: async () => {
       const result = await api.getAccess(tokenId!, userAddress!);
       return result.access;
@@ -192,6 +217,7 @@ export function useMarketQuote(tokenId?: number, amount = 1) {
   return useQuery({
     queryKey: ["market-quote", tokenId, amount],
     enabled: tokenId !== undefined,
+    ...liveQueryOptions,
     queryFn: async () => {
       const result = await api.getQuote(tokenId!, amount);
       return result.quote;
@@ -205,6 +231,7 @@ export function useGapEvents() {
   return useQuery({
     queryKey: ["gap-events", publicClient?.chain?.id, INFT_ADDRESS],
     enabled: Boolean(publicClient && hasInftAddress),
+    ...liveQueryOptions,
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();
@@ -252,6 +279,7 @@ export function useMentorActivityEvents() {
   return useQuery({
     queryKey: ["mentor-activity-events", publicClient?.chain?.id, MARKETPLACE_ADDRESS, INFT_ADDRESS],
     enabled: Boolean(publicClient && hasMarketplaceAddress && hasInftAddress),
+    ...liveQueryOptions,
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();
@@ -317,6 +345,7 @@ export function useSecurityEvents() {
   return useQuery({
     queryKey: ["security-events", publicClient?.chain?.id, INFT_ADDRESS],
     enabled: Boolean(publicClient && hasInftAddress),
+    ...liveQueryOptions,
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();

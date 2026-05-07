@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAccount, usePublicClient, useReadContracts, useSendTransaction, useWriteContract } from "wagmi";
 
 import { api } from "@/lib/api";
-import { formatOg, useMentors, usePendingCuratorRewards, useShareBalance, useSharePrice } from "@/hooks/useMarketplace";
+import { LIVE_REFETCH_INTERVAL_MS, formatOg, useMentors, usePendingCuratorRewards, useShareBalance, useSharePrice } from "@/hooks/useMarketplace";
 import { hasMarketplaceAddress, MARKETPLACE_ADDRESS, marketplaceAbi } from "@/lib/contracts";
 
 // 0.001 ETH base + 0.000002 ETH per share sold (from AccessSharesMarket.sol)
@@ -47,7 +47,12 @@ export default function SharesView() {
 
   const { data: batchResults } = useReadContracts({
     contracts: batchContracts,
-    query: { enabled: Boolean(address && mentors.length > 0 && hasMarketplaceAddress) },
+    query: {
+      enabled: Boolean(address && mentors.length > 0 && hasMarketplaceAddress),
+      refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+      refetchIntervalInBackground: false,
+      staleTime: 4_000,
+    },
   });
 
   const portfolioItems = mentors.map((mentor, i) => {
@@ -62,26 +67,41 @@ export default function SharesView() {
   const totalRewards = portfolioItems.reduce((sum, item) => sum + item.rewards, BigInt(0));
   const activeMentorCount = portfolioItems.filter((item) => item.balance > 0).length;
 
-  // Allocation donut chart — only mentors where user has shares
-  let accumulated = 0;
   const allocationItems = portfolioItems
     .filter((item) => item.balance > 0)
-    .map((item, i) => {
+    .reduce<{
+      accumulated: number;
+      items: Array<{
+        color: string;
+        name: string;
+        tokenId: number;
+        value: string;
+        pct: string;
+        start: number;
+        end: number;
+      }>;
+    }>((state, item, i) => {
       const pct = totalValue > BigInt(0)
         ? Number((item.value * BigInt(10000)) / totalValue) / 100
         : 0;
-      const start = accumulated;
-      accumulated += pct;
+      const start = state.accumulated;
+      const end = start + pct;
       return {
-        color: ALLOCATION_COLORS[i % ALLOCATION_COLORS.length],
-        name: item.mentor.name,
-        tokenId: item.mentor.tokenId,
-        value: formatOg(item.value),
-        pct: `${pct.toFixed(1)}%`,
-        start,
-        end: accumulated,
+        accumulated: end,
+        items: [
+          ...state.items,
+          {
+            color: ALLOCATION_COLORS[i % ALLOCATION_COLORS.length],
+            name: item.mentor.name,
+            tokenId: item.mentor.tokenId,
+            value: formatOg(item.value),
+            pct: `${pct.toFixed(1)}%`,
+            start,
+            end,
+          },
+        ],
       };
-    });
+    }, { accumulated: 0, items: [] }).items;
 
   const conicGradient = allocationItems.length > 0
     ? `conic-gradient(${allocationItems.map((item) => `${item.color} ${item.start}% ${item.end}%`).join(",")})`
