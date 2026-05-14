@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAccount, usePublicClient, useReadContracts, useSendTransaction, useWriteContract } from "wagmi";
 
+import { useTxToast } from "@/components/ToastProvider";
 import { api } from "@/lib/api";
 import { LIVE_REFETCH_INTERVAL_MS, formatOg, useMentors, usePendingCuratorRewards, useShareBalance, useSharePrice } from "@/hooks/useMarketplace";
 import { hasMarketplaceAddress, MARKETPLACE_ADDRESS, marketplaceAbi } from "@/lib/contracts";
@@ -370,18 +371,22 @@ export default function SharesView() {
 function BuySharesButton({ tokenId, className }: { tokenId: number; className: string }) {
   const publicClient = usePublicClient();
   const { sendTransactionAsync } = useSendTransaction();
+  const txToast = useTxToast();
   const [busy, setBusy] = useState(false);
 
   async function handleBuy() {
     setBusy(true);
     try {
-      const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
-      const hash = await sendTransactionAsync({
-        to: result.tx.to,
-        data: result.tx.data,
-        value: BigInt(result.tx.value),
+      await txToast("Buy share", async () => {
+        const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
+        const hash = await sendTransactionAsync({
+          to: result.tx.to,
+          data: result.tx.data,
+          value: BigInt(result.tx.value),
+        });
+        await publicClient?.waitForTransactionReceipt({ hash });
+        return hash;
       });
-      await publicClient?.waitForTransactionReceipt({ hash });
     } finally {
       setBusy(false);
     }
@@ -407,6 +412,7 @@ type SharePosition = {
 
 function SharePositionRow({ row, user }: { row: SharePosition; user?: `0x${string}` }) {
   const { writeContractAsync } = useWriteContract();
+  const txToast = useTxToast();
   const balance = useShareBalance(row.tokenId, user);
   const price = useSharePrice(row.tokenId);
   const pendingRewards = usePendingCuratorRewards(row.tokenId, user);
@@ -416,25 +422,31 @@ function SharePositionRow({ row, user }: { row: SharePosition; user?: `0x${strin
 
   async function claimRewards() {
     if (row.tokenId === undefined) return;
-    await writeContractAsync({
-      address: MARKETPLACE_ADDRESS,
-      abi: marketplaceAbi,
-      functionName: "claimCuratorRewards",
-      args: [BigInt(row.tokenId)],
-    });
+    const tokenId = row.tokenId;
+    await txToast("Claim rewards", () =>
+      writeContractAsync({
+        address: MARKETPLACE_ADDRESS,
+        abi: marketplaceAbi,
+        functionName: "claimCuratorRewards",
+        args: [BigInt(tokenId)],
+      }),
+    );
     await pendingRewards.refetch();
   }
 
   async function sellShares() {
     if (row.tokenId === undefined) return;
+    const tokenId = row.tokenId;
     const amount = Number(window.prompt("Amount to sell", "1"));
     if (!amount) return;
-    await writeContractAsync({
-      address: MARKETPLACE_ADDRESS,
-      abi: marketplaceAbi,
-      functionName: "sellShares",
-      args: [BigInt(row.tokenId), amount],
-    });
+    await txToast("Sell shares", () =>
+      writeContractAsync({
+        address: MARKETPLACE_ADDRESS,
+        abi: marketplaceAbi,
+        functionName: "sellShares",
+        args: [BigInt(tokenId), amount],
+      }),
+    );
     await balance.refetch();
   }
 

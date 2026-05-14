@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BarChart3,
   ChevronDown,
-  ClipboardList,
   Crosshair,
   FileText,
   Lock,
@@ -13,7 +12,6 @@ import {
   ShieldCheck,
   Snowflake,
   TrendingUp,
-  UserRound,
   Users,
   Wallet,
   Waves,
@@ -24,6 +22,7 @@ import { useAccount, usePublicClient, useSendTransaction, useSignMessage } from 
 
 import { api, type TxPayload } from "@/lib/api";
 import { zeroGMainnet } from "@/lib/chains";
+import { useTxToast } from "@/components/ToastProvider";
 import { formatOg, useGapEvents, useMarketQuote, useMentors, useShareBalance, type MentorMeta } from "@/hooks/useMarketplace";
 
 const mentorImages = [
@@ -151,14 +150,17 @@ function BuySharesButton({
   tokenId?: number;
 }) {
   const sendPayload = useTxPayloadSender();
+  const txToast = useTxToast();
   const [busy, setBusy] = useState(false);
 
   async function buyShares() {
     if (tokenId === undefined) return;
     setBusy(true);
     try {
-      const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
-      await sendPayload(result.tx);
+      await txToast("Buy share", async () => {
+        const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
+        return sendPayload(result.tx);
+      });
     } finally {
       setBusy(false);
     }
@@ -174,6 +176,7 @@ function BuySharesButton({
 function MentorCard({ mentor, index }: { mentor: DisplayMentor; index: number }) {
   const { address } = useAccount();
   const sendPayload = useTxPayloadSender();
+  const txToast = useTxToast();
   const quote = useMarketQuote(mentor.tokenId, 1);
   const shareBalance = useShareBalance(mentor.tokenId, address);
   const [busy, setBusy] = useState<string | null>(null);
@@ -183,10 +186,13 @@ function MentorCard({ mentor, index }: { mentor: DisplayMentor; index: number })
 
   async function buyAccess() {
     if (mentor.tokenId === undefined) return;
+    const tokenId = mentor.tokenId;
     setBusy("buy");
     try {
-      const result = await api.buildBuySharesTx({ tokenId: mentor.tokenId, amount: 1 });
-      await sendPayload(result.tx);
+      await txToast("Buy shares", async () => {
+        const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
+        return sendPayload(result.tx);
+      });
     } finally {
       setBusy(null);
     }

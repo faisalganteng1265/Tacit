@@ -25,6 +25,19 @@ const liveQueryOptions = {
   staleTime: 4_000,
 } as const;
 
+export function getEventFromBlock(currentBlock: bigint) {
+  const configuredBlock = process.env.NEXT_PUBLIC_EVENT_FROM_BLOCK;
+
+  if (!configuredBlock) return BigInt(0);
+
+  try {
+    const fromBlock = BigInt(configuredBlock);
+    return fromBlock >= BigInt(0) && fromBlock <= currentBlock ? fromBlock : BigInt(0);
+  } catch {
+    return BigInt(0);
+  }
+}
+
 export type MentorMeta = {
   tokenId: number;
   creator: Address;
@@ -208,7 +221,7 @@ export function useGapEvents() {
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > BigInt(100_000) ? currentBlock - BigInt(100_000) : BigInt(0);
+      const fromBlock = getEventFromBlock(currentBlock);
       const [incremented, resolved] = await Promise.all([
         publicClient.getLogs({
           address: INFT_ADDRESS,
@@ -256,7 +269,7 @@ export function useMentorActivityEvents() {
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > BigInt(100_000) ? currentBlock - BigInt(100_000) : BigInt(0);
+      const fromBlock = getEventFromBlock(currentBlock);
       const [registered, storageUpdates, statusChanges] = await Promise.all([
         publicClient.getLogs({
           address: MARKETPLACE_ADDRESS,
@@ -322,7 +335,7 @@ export function useSecurityEvents() {
     queryFn: async () => {
       if (!publicClient) return [];
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > BigInt(100_000) ? currentBlock - BigInt(100_000) : BigInt(0);
+      const fromBlock = getEventFromBlock(currentBlock);
       const [transfers, storageUpdates] = await Promise.all([
         publicClient.getLogs({
           address: INFT_ADDRESS,

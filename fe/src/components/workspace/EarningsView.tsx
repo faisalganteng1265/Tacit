@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useReadContracts, useWriteContract } from "wagmi";
 
-import { LIVE_REFETCH_INTERVAL_MS, formatOg, useMentorClaimable, useMentors, useVestingProgress } from "@/hooks/useMarketplace";
+import { useTxToast } from "@/components/ToastProvider";
+import { LIVE_REFETCH_INTERVAL_MS, formatOg, getEventFromBlock, useMentorClaimable, useMentors, useVestingProgress } from "@/hooks/useMarketplace";
 import { hasMarketplaceAddress, MARKETPLACE_ADDRESS, marketplaceAbi } from "@/lib/contracts";
 
 import { subtleButtonClass, solidAccentBtn } from "./shared";
@@ -21,6 +22,7 @@ export default function EarningsView() {
   const { address } = useAccount();
   const { data: mentors = [] } = useMentors();
   const { writeContractAsync } = useWriteContract();
+  const txToast = useTxToast();
   const publicClient = usePublicClient();
   const myMentors = address ? mentors.filter((mentor) => mentor.creator.toLowerCase() === address.toLowerCase()) : [];
 
@@ -43,6 +45,12 @@ export default function EarningsView() {
   const totalClaimable = claimableResults
     ? claimableResults.reduce((sum, r) => sum + ((r.result as bigint | undefined) ?? BigInt(0)), BigInt(0))
     : BigInt(0);
+  const claimableMentors = myMentors
+    .map((mentor, index) => ({
+      mentor,
+      amount: (claimableResults?.[index]?.result as bigint | undefined) ?? BigInt(0),
+    }))
+    .filter((item) => item.amount > BigInt(0));
 
   // Total queries across all my mentors → estimate of revenue generated
   const totalQueries = myMentors.reduce((sum, m) => sum + m.totalQueries, 0);
@@ -57,7 +65,7 @@ export default function EarningsView() {
     queryFn: async () => {
       if (!publicClient || !address) return [];
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock > BigInt(100_000) ? currentBlock - BigInt(100_000) : BigInt(0);
+      const fromBlock = getEventFromBlock(currentBlock);
       const logs = await publicClient.getLogs({
         address: MARKETPLACE_ADDRESS,
         event: marketplaceAbi[2],
@@ -93,15 +101,17 @@ export default function EarningsView() {
     String(mentor.tokenId),
   ]);
 
-  async function claimFirstRoyalty() {
-    const tokenId = myMentors[0]?.tokenId;
-    if (tokenId === undefined) return;
-    await writeContractAsync({
-      address: MARKETPLACE_ADDRESS,
-      abi: marketplaceAbi,
-      functionName: "claimMentorRoyalty",
-      args: [BigInt(tokenId)],
-    });
+  async function claimAllRoyalties() {
+    for (const { mentor } of claimableMentors) {
+      await txToast(`Claim ${mentor.name}`, () =>
+        writeContractAsync({
+          address: MARKETPLACE_ADDRESS,
+          abi: marketplaceAbi,
+          functionName: "claimMentorRoyalty",
+          args: [BigInt(mentor.tokenId)],
+        }),
+      );
+    }
   }
 
   return (
@@ -233,8 +243,8 @@ export default function EarningsView() {
             <p className="mt-3 text-center text-[11px] text-[#d1d5db]">Available to claim</p>
           </div>
           <div className="p-4">
-            <p className="mb-5 text-center text-[11px] leading-[1.6] text-[#8b95a3]">Includes vested allocations ready for withdrawal.</p>
-            <button className={`flex w-full items-center justify-center gap-2 py-2.5 text-[10px] ${solidAccentBtn}`} disabled={myMentors.length === 0} onClick={claimFirstRoyalty} type="button">CLAIM REWARDS <span className="text-base leading-none">›</span></button>
+            <p className="mb-5 text-center text-[11px] leading-[1.6] text-[#8b95a3]">Claims every mentor with available royalties. One wallet confirmation per mentor.</p>
+            <button className={`flex w-full items-center justify-center gap-2 py-2.5 text-[10px] ${solidAccentBtn}`} disabled={claimableMentors.length === 0} onClick={claimAllRoyalties} type="button">CLAIM ALL REWARDS <span className="text-base leading-none">›</span></button>
           </div>
         </div>
       </div>
@@ -311,6 +321,7 @@ function VestingRow({
   index: number;
 }) {
   const { writeContractAsync } = useWriteContract();
+  const txToast = useTxToast();
   const tokenId = row.tokenId ? Number(row.tokenId) : undefined;
   const claimable = useMentorClaimable(tokenId);
   const vestingProgress = useVestingProgress(tokenId);
@@ -323,12 +334,14 @@ function VestingRow({
   async function vestOrClaim() {
     if (tokenId === undefined) return;
     const claim = window.confirm("OK = claim vested, Cancel = vest earnings");
-    await writeContractAsync({
-      address: MARKETPLACE_ADDRESS,
-      abi: marketplaceAbi,
-      functionName: claim ? "claimVested" : "vestEarnings",
-      args: [BigInt(tokenId)],
-    });
+    await txToast(claim ? "Claim vested" : "Vest earnings", () =>
+      writeContractAsync({
+        address: MARKETPLACE_ADDRESS,
+        abi: marketplaceAbi,
+        functionName: claim ? "claimVested" : "vestEarnings",
+        args: [BigInt(tokenId)],
+      }),
+    );
   }
 
   return (

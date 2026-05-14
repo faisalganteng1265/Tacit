@@ -451,7 +451,7 @@ export default function LandingPage() {
           <FadeIn className="lg:w-[42%] lg:sticky lg:top-28 self-start">
             <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.32em] text-[#2a3038]">The problem</p>
             <div className="relative">
-              <span className="absolute -left-2 -top-8 text-[80px] leading-none text-[#2dd4bf]/10 font-serif select-none">"</span>
+              <span className="absolute -left-2 -top-8 text-[80px] leading-none text-[#2dd4bf]/10 font-serif select-none">&quot;</span>
               <p className="text-[clamp(22px,2.8vw,34px)] font-extrabold leading-[1.2] tracking-tight text-white">
                 The expertise that compounds the most is the expertise you cannot publish.
               </p>

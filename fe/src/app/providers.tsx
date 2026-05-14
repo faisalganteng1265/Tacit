@@ -5,6 +5,7 @@ import { RainbowKitProvider, darkTheme, getDefaultConfig } from "@rainbow-me/rai
 import { ReactNode, useState } from "react";
 import { WagmiProvider } from "wagmi";
 
+import { ToastProvider } from "@/components/ToastProvider";
 import { zeroGGalileo, zeroGMainnet } from "@/lib/chains";
 
 const walletConnectProjectId =
@@ -37,7 +38,7 @@ export default function Providers({ children }: ProvidersProps) {
             overlayBlur: "small",
           })}
         >
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

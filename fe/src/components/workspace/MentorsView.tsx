@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useWriteContract } from "wagmi";
 
+import { useTxToast } from "@/components/ToastProvider";
 import { useMentorActivityEvents, useMentors } from "@/hooks/useMarketplace";
 import { api } from "@/lib/api";
 import { MARKETPLACE_ADDRESS, marketplaceAbi } from "@/lib/contracts";
@@ -15,6 +16,7 @@ export default function MentorsView() {
   const { data: onchainMentors = [], refetch } = useMentors();
   const { data: activityEvents = [] } = useMentorActivityEvents();
   const { writeContractAsync } = useWriteContract();
+  const txToast = useTxToast();
   const [isMintOpen, setIsMintOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [mintName, setMintName] = useState("");
@@ -61,17 +63,22 @@ export default function MentorsView() {
   async function mintMentor(event: FormEvent) {
     event.preventDefault();
     setModalBusy(true);
-    await writeContractAsync({
-      address: MARKETPLACE_ADDRESS,
-      abi: marketplaceAbi,
-      functionName: "registerMentor",
-      args: [mintName, mintCategory || "General", "pending"],
-    });
-    setMintName("");
-    setMintCategory("");
-    setIsMintOpen(false);
-    setModalBusy(false);
-    await refetch();
+    try {
+      await txToast("Mint mentor", () =>
+        writeContractAsync({
+          address: MARKETPLACE_ADDRESS,
+          abi: marketplaceAbi,
+          functionName: "registerMentor",
+          args: [mintName, mintCategory || "General", "pending"],
+        }),
+      );
+      setMintName("");
+      setMintCategory("");
+      setIsMintOpen(false);
+      await refetch();
+    } finally {
+      setModalBusy(false);
+    }
   }
 
   async function uploadKnowledge(event: FormEvent) {
@@ -82,13 +89,16 @@ export default function MentorsView() {
     formData.set("tokenId", uploadTokenId);
     if (uploadFile) formData.set("file", uploadFile);
     else formData.set("text", uploadText);
-    await api.uploadKnowledge(formData);
-    setUploadTokenId("");
-    setUploadText("");
-    setUploadFile(null);
-    setIsUploadOpen(false);
-    setModalBusy(false);
-    await refetch();
+    try {
+      await txToast("Upload knowledge", () => api.uploadKnowledge(formData));
+      setUploadTokenId("");
+      setUploadText("");
+      setUploadFile(null);
+      setIsUploadOpen(false);
+      await refetch();
+    } finally {
+      setModalBusy(false);
+    }
   }
 
   const statusBadge: Record<"DRAFT" | "REVIEW" | "READY", string> = {
@@ -415,12 +425,20 @@ export default function MentorsView() {
                 <option value="">— Select mentor —</option>
                 {mentors.map((m) => (
                   <option key={m.tokenId} value={String(m.tokenId)}>
-                    {m.name} (#{m.tokenId})
+                    {m.name} — {m.category || "General"}
                   </option>
                 ))}
               </select>
-              <input className="w-full rounded border border-[#26333d] bg-[#050607] px-3 py-2 text-xs text-[#8b95a3]" type="file" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
-              <textarea className="min-h-32 w-full rounded border border-[#26333d] bg-[#050607] px-3 py-2 text-xs text-white outline-none" placeholder="Or paste knowledge text" value={uploadText} onChange={(event) => setUploadText(event.target.value)} />
+              <input
+                accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json"
+                className="w-full rounded border border-[#26333d] bg-[#050607] px-3 py-2 text-xs text-[#8b95a3]"
+                type="file"
+                onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
+              />
+              <p className="text-[10px] leading-[1.5] text-[#707b89]">
+                Text-based files only: .txt, .md, .csv, or .json. PDF and DOCX extraction is not enabled.
+              </p>
+              <textarea className="min-h-32 w-full rounded border border-[#26333d] bg-[#050607] px-3 py-2 text-xs text-white outline-none" placeholder="Or paste plain knowledge text" value={uploadText} onChange={(event) => setUploadText(event.target.value)} />
               <button className={`w-full py-2.5 text-[10px] ${solidAccentBtn}`} disabled={modalBusy || (!uploadFile && !uploadText.trim())} type="submit">{modalBusy ? "UPLOADING..." : "UPLOAD TO 0G STORAGE"}</button>
             </div>
           </form>

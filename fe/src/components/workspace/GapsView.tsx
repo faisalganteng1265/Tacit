@@ -8,6 +8,75 @@ import { subtleButtonClass, accentButtonClass } from "./shared";
 
 const panelClass = "border border-[rgba(96,165,250,0.24)] bg-black";
 
+const mockGapRows = [
+  {
+    title: "Low-confidence answer detected",
+    mentor: "IndoRegulator_01",
+    category: "Regulatory",
+    priority: "CRITICAL",
+    confidence: "38%",
+    queries: "21",
+    updated: "2h ago",
+    severity: "High severity",
+    status: "IN REVIEW",
+  },
+  {
+    title: "Source freshness below threshold",
+    mentor: "MiCA Stablecoin Analyst",
+    category: "Compliance",
+    priority: "HIGH",
+    confidence: "46%",
+    queries: "14",
+    updated: "4h ago",
+    severity: "High severity",
+    status: "IN REVIEW",
+  },
+  {
+    title: "Proxy incident runbook missing detail",
+    mentor: "CyberSec_V2",
+    category: "Security",
+    priority: "MEDIUM",
+    confidence: "61%",
+    queries: "8",
+    updated: "6h ago",
+    severity: "Moderate severity",
+    status: "IN REVIEW",
+  },
+  {
+    title: "Cross-chain risk dataset stale",
+    mentor: "ChainIntel_3",
+    category: "DeFi",
+    priority: "LOW",
+    confidence: "74%",
+    queries: "3",
+    updated: "8h ago",
+    severity: "Low severity",
+    status: "RESOLVED",
+  },
+  {
+    title: "Gap resolved by oracle",
+    mentor: "QuantAlpha_7",
+    category: "Trading",
+    priority: "LOW",
+    confidence: "88%",
+    queries: "2",
+    updated: "12h ago",
+    severity: "Low severity",
+    status: "RESOLVED",
+  },
+  {
+    title: "Citation coverage drift detected",
+    mentor: "ResearchOps_5",
+    category: "Research",
+    priority: "HIGH",
+    confidence: "49%",
+    queries: "11",
+    updated: "1d ago",
+    severity: "High severity",
+    status: "IN REVIEW",
+  },
+] as const;
+
 export default function GapsView() {
   const { data: gapEvents = [] } = useGapEvents();
   const { data: mentors = [] } = useMentors();
@@ -16,7 +85,7 @@ export default function GapsView() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [showRowsMenu, setShowRowsMenu] = useState(false);
 
-  const allGaps = gapEvents.map((event) => {
+  const liveGaps = gapEvents.map((event) => {
     const mentor = mentors.find((item) => item.tokenId === event.tokenId);
     const priority = event.count > 20 ? "CRITICAL" : event.count > 10 ? "HIGH" : event.count > 3 ? "MEDIUM" : "LOW";
     const status = event.type === "GapResolved" ? "RESOLVED" : "IN REVIEW";
@@ -33,6 +102,7 @@ export default function GapsView() {
       status,
     };
   });
+  const allGaps = liveGaps.length > 0 ? liveGaps : mockGapRows;
 
   const filteredGaps = activeFilter === "ALL"
     ? allGaps
@@ -46,7 +116,9 @@ export default function GapsView() {
   const endIdx = Math.min(startIdx + rowsPerPage, filteredGaps.length);
   const gaps = filteredGaps.slice(startIdx, endIdx);
 
-  const totalOpenGaps = mentors.reduce((sum, mentor) => sum + mentor.gapCount, 0);
+  const totalOpenGaps = liveGaps.length > 0
+    ? mentors.reduce((sum, mentor) => sum + mentor.gapCount, 0)
+    : allGaps.filter((gap) => gap.status !== "RESOLVED").length;
   const criticalGaps = allGaps.filter((gap) => gap.priority === "CRITICAL").length;
   const inReviewGaps = allGaps.filter((gap) => gap.status === "IN REVIEW").length;
   const resolvedGaps = allGaps.filter((gap) => gap.status === "RESOLVED").length;
@@ -63,8 +135,8 @@ export default function GapsView() {
     ["RESOLVED", String(resolvedGaps), "good"],
   ];
   const gapStats = [
-    ["◎", "Total Open Gaps", String(totalOpenGaps), `${gapEvents.length} events`, "on-chain", "#2dd4bf"],
-    ["△", "Critical Priority", String(criticalGaps), "live events", "", "#fb7185"],
+    ["◎", "Total Open Gaps", String(totalOpenGaps), `${allGaps.length} ${liveGaps.length > 0 ? "events" : "mock rows"}`, liveGaps.length > 0 ? "on-chain" : "preview data", "#2dd4bf"],
+    ["△", "Critical Priority", String(criticalGaps), liveGaps.length > 0 ? "live events" : "mock queue", "", "#fb7185"],
     ["♧", "Avg Confidence Recovery", "+21.4%", "30d trend", "spark", "#2dd4bf"],
     ["♧", "Pending Reviews", String(Math.max(totalOpenGaps - criticalGaps, 0)), "Needs attention", "", "#2dd4bf"],
   ];

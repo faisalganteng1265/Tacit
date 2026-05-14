@@ -4,7 +4,8 @@ import { useState, type FormEvent } from "react";
 import { isAddress, type Address } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
 
-import { shortAddress, useMentors, useSecurityEvents } from "@/hooks/useMarketplace";
+import { useTxToast } from "@/components/ToastProvider";
+import { shortAddress, useSecurityEvents } from "@/hooks/useMarketplace";
 import { api } from "@/lib/api";
 import { INFT_ADDRESS, inftAbi } from "@/lib/contracts";
 
@@ -15,6 +16,7 @@ const panelClass = "border border-[rgba(96,165,250,0.24)] bg-black";
 export default function SecurityView() {
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  const txToast = useTxToast();
   const { data: securityEvents = [] } = useSecurityEvents();
   const [transferMode, setTransferMode] = useState<"transfer" | "clone" | null>(null);
   const [tokenId, setTokenId] = useState("");
@@ -288,16 +290,22 @@ export default function SecurityView() {
               event.preventDefault();
               if (!isAddress(to)) return;
               setBusy(true);
-              const body = { mentorId, tokenId: Number(tokenId), from: address, to };
-              const proof = transferMode === "transfer" ? await api.signTransfer(body) : await api.signClone(body);
-              await writeContractAsync({
-                address: INFT_ADDRESS,
-                abi: inftAbi,
-                functionName: transferMode === "transfer" ? "iTransfer" : "iClone",
-                args: [to as Address, BigInt(tokenId), proof.proofs as never],
-              });
-              setBusy(false);
-              setTransferMode(null);
+              try {
+                const mode = transferMode;
+                const body = { mentorId, tokenId: Number(tokenId), from: address, to };
+                await txToast(mode === "transfer" ? "Transfer INFT" : "Clone INFT", async () => {
+                  const proof = mode === "transfer" ? await api.signTransfer(body) : await api.signClone(body);
+                  return writeContractAsync({
+                    address: INFT_ADDRESS,
+                    abi: inftAbi,
+                    functionName: mode === "transfer" ? "iTransfer" : "iClone",
+                    args: [to as Address, BigInt(tokenId), proof.proofs as never],
+                  });
+                });
+                setTransferMode(null);
+              } finally {
+                setBusy(false);
+              }
             }}
           >
             <div className="mb-4 flex items-center justify-between">
