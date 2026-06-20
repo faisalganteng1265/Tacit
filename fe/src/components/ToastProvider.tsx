@@ -128,7 +128,7 @@ export function useTxToast() {
 
       try {
         const result = await action();
-        const txHash = typeof result === "string" && result.startsWith("0x") ? result : undefined;
+        const txHash = typeof result === "string" && result.length > 0 ? result : undefined;
 
         addToast({
           title: `${label} submitted`,

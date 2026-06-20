@@ -17,14 +17,15 @@ import {
   Waves,
   X,
 } from "lucide-react";
+import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 import { useState, useMemo, Suspense, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAccount, usePublicClient, useSendTransaction, useSignMessage } from "wagmi";
 
-import { api, type TxPayload } from "@/lib/api";
-import { zeroGMainnet } from "@/lib/chains";
+import { api } from "@/lib/api";
+import { PACKAGE_ID } from "@/lib/contracts";
 import { useTxToast } from "@/components/ToastProvider";
-import { formatOg, useGapEvents, useMarketQuote, useMentors, useShareBalance, type MentorMeta } from "@/hooks/useMarketplace";
+import { formatSui, statusLabel, useGapEvents, useMarketQuote, useMentors, useShareBalance, type Mentor } from "@/hooks/useMarketplace";
 
 const mentorImages = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuDmEXNoAf-cmrKUiwhuPOpaf-1mlPbR4cehM2rReUiOo2pR5YTe2Y_fOieBJYQw_jjpObE2rUSUeNDpZXLLkfqIKq9eDx6Fq3naaIJ6NOUdh6TvXdSpR1mBGR9lbNuKz4l-ipSme9cTTlN69LdjblpvS-GdoEpVRO9MKyUXZf-pgQ2gP1ewqG9FgLo7t-LG4nmGXSCJbKBwUhTzVhejUHG9tF_1qCcdCRUc30KxL-C4qKOU2qD6qXSfUOcieWVkEwOxSK5b6CoRPc0",
@@ -104,63 +105,36 @@ function Sparkline({ tone = "teal" }: { tone?: "teal" | "blue" | "amber" }) {
   );
 }
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function useTxPayloadSender() {
-  const publicClient = usePublicClient({ chainId: zeroGMainnet.id });
-  const { sendTransactionAsync } = useSendTransaction();
-
-  return async (tx: TxPayload) => {
-    const hash = await sendTransactionAsync({
-      chainId: zeroGMainnet.id,
-      to: tx.to,
-      data: tx.data,
-      value: BigInt(tx.value),
-    });
-    if (!publicClient) return hash;
-
-    try {
-      await publicClient.waitForTransactionReceipt({
-        hash,
-        confirmations: 1,
-        timeout: 120_000,
-      });
-    } catch (err) {
-      for (let attempt = 0; attempt < 12; attempt += 1) {
-        await wait(2_500);
-        try {
-          await publicClient.getTransactionReceipt({ hash });
-          return hash;
-        } catch {
-          // Some 0G RPC nodes lag receipt indexing immediately after broadcast.
-        }
-      }
-      throw err;
-    }
-    return hash;
-  };
-}
-
 function BuySharesButton({
   children,
   className,
-  tokenId,
+  stateId,
+  sharePoolId,
 }: {
   children: ReactNode;
   className: string;
-  tokenId?: number;
+  stateId?: string;
+  sharePoolId?: string;
 }) {
-  const sendPayload = useTxPayloadSender();
+  const account = useCurrentAccount();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
+  const { data: quote } = useMarketQuote(stateId);
   const txToast = useTxToast();
   const [busy, setBusy] = useState(false);
 
   async function buyShares() {
-    if (tokenId === undefined) return;
+    if (!sharePoolId || !account) return;
     setBusy(true);
     try {
       await txToast("Buy share", async () => {
-        const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
-        return sendPayload(result.tx);
+        const tx = new Transaction();
+        const [payment] = tx.splitCoins(tx.gas, [quote?.buySharesCostMist ?? 0]);
+        const change = tx.moveCall({
+          target: `${PACKAGE_ID}::shares_market::buy_shares`,
+          arguments: [tx.object(sharePoolId), payment, tx.pure.u64(1)],
+        });
+        tx.transferObjects([change], account.address);
+        return (await signAndExecute({ transaction: tx })).digest;
       });
     } finally {
       setBusy(false);
@@ -168,7 +142,7 @@ function BuySharesButton({
   }
 
   return (
-    <button className={className} disabled={busy || tokenId === undefined} onClick={buyShares} type="button">
+    <button className={className} disabled={busy || !sharePoolId || !account} onClick={buyShares} type="button">
       {busy ? "PENDING..." : children}
     </button>
   );
@@ -207,31 +181,36 @@ function MentorCardSkeleton() {
 }
 
 function MentorCard({ mentor, index }: { mentor: DisplayMentor; index: number }) {
-  const { address } = useAccount();
-  const sendPayload = useTxPayloadSender();
+  const account = useCurrentAccount();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const txToast = useTxToast();
-  const quote = useMarketQuote(mentor.tokenId, 1);
-  const shareBalance = useShareBalance(mentor.tokenId, address);
+  const quote = useMarketQuote(mentor.stateId, 1);
+  const shareBalance = useShareBalance(mentor.sharePoolId, account?.address);
   const [busy, setBusy] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const ownedShares = Number(shareBalance.data ?? 0);
-  const canAskMentor = mentor.tokenId !== undefined && ownedShares > 0;
+  const canAskMentor = ownedShares > 0;
 
   async function buyAccess() {
-    if (mentor.tokenId === undefined) return;
-    const tokenId = mentor.tokenId;
+    if (!account) return;
     setBusy("buy");
     try {
       await txToast("Buy shares", async () => {
-        const result = await api.buildBuySharesTx({ tokenId, amount: 1 });
-        return sendPayload(result.tx);
+        const tx = new Transaction();
+        const [payment] = tx.splitCoins(tx.gas, [quote.data?.buySharesCostMist ?? 0]);
+        const change = tx.moveCall({
+          target: `${PACKAGE_ID}::shares_market::buy_shares`,
+          arguments: [tx.object(mentor.sharePoolId), payment, tx.pure.u64(1)],
+        });
+        tx.transferObjects([change], account.address);
+        return (await signAndExecute({ transaction: tx })).digest;
       });
     } finally {
       setBusy(null);
     }
   }
 
-  const sharePrice = quote.data?.sharePriceWei ? formatOg(quote.data.sharePriceWei) : `${mentor.sharePrice} 0G`;
+  const sharePrice = quote.data?.sharePriceMist ? formatSui(quote.data.sharePriceMist) : `${mentor.sharePrice} SUI`;
 
   return (
     <>
@@ -303,9 +282,9 @@ function MentorCard({ mentor, index }: { mentor: DisplayMentor; index: number })
             type="button"
           >
             <MessageSquare className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
-            {address ? "ASK MENTOR" : "CONNECT FIRST"}
+            {account ? "ASK MENTOR" : "CONNECT FIRST"}
           </button>
-          <button className={`flex-1 cursor-pointer rounded border px-0 py-2 font-mono text-[10px] font-extrabold tracking-[0.1em] ${buyAccessToneClasses[mentor.tone]}`} disabled={busy === "buy" || mentor.tokenId === undefined} onClick={buyAccess} type="button">
+          <button className={`flex-1 cursor-pointer rounded border px-0 py-2 font-mono text-[10px] font-extrabold tracking-[0.1em] ${buyAccessToneClasses[mentor.tone]}`} disabled={busy === "buy" || !account} onClick={buyAccess} type="button">
             <Lock className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
             {busy === "buy" ? "PENDING..." : "BUY SHARES"}
           </button>
@@ -539,45 +518,42 @@ function MarkdownMessage({ text }: { text: string }) {
 }
 
 function MentorChatModal({ mentor, onClose }: { mentor: DisplayMentor; onClose: () => void }) {
-  const { address } = useAccount();
-  const { signMessageAsync } = useSignMessage();
-  const sendPayload = useTxPayloadSender();
+  const account = useCurrentAccount();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const txToast = useTxToast();
+  const quote = useMarketQuote(mentor.stateId);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "system",
-      text: `Connected to ${mentor.name}. Each answer is settled on-chain before BE runs the TEE query.`,
+      text: `Connected to ${mentor.name}. Each answer is settled on-chain before BE runs the Atoma TEE query.`,
     },
   ]);
   const [busy, setBusy] = useState(false);
 
   async function submitQuestion() {
-    if (!question.trim() || mentor.tokenId === undefined || !address) return;
-    const tokenId = mentor.tokenId;
+    if (!question.trim() || !account) return;
     const currentQuestion = question.trim();
     setQuestion("");
     setBusy(true);
     setMessages((current) => [...current, { role: "user", text: currentQuestion }]);
 
     try {
-      const message = await api.getQueryMessage({
-        tokenId,
-        question: currentQuestion,
-        userAddress: address,
-      });
-      const signature = await signMessageAsync({ message: message.message });
-      const settlementTxHash = await txToast("Confirm LLM query", async () => {
-        const settlement = await api.buildExecuteQueryTx({ tokenId });
-        return sendPayload(settlement.tx);
+      const settlementTxDigest = await txToast("Confirm LLM query", async () => {
+        const tx = new Transaction();
+        const [payment] = tx.splitCoins(tx.gas, [quote.data?.queryPriceMist ?? 0]);
+        const change = tx.moveCall({
+          target: `${PACKAGE_ID}::marketplace::execute_query`,
+          arguments: [tx.object(mentor.stateId), tx.object(mentor.sharePoolId), tx.object(mentor.revenuePoolId), payment],
+        });
+        tx.transferObjects([change], account.address);
+        const result = await signAndExecute({ transaction: tx });
+        return result.digest;
       });
       const answer = await api.sendQuery({
-        tokenId,
+        stateId: mentor.stateId,
         question: currentQuestion,
-        userAddress: address,
-        signature,
-        signedAt: message.signedAt,
-        settlementTxHash,
+        settlementTxDigest,
       });
 
       setMessages((current) => [
@@ -613,7 +589,7 @@ function MentorChatModal({ mentor, onClose }: { mentor: DisplayMentor; onClose: 
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-white">{mentor.name}</p>
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2dd4bf]">
-                Mentor #{mentor.tokenId} / {mentor.tag}
+                {mentor.stateId.slice(0, 8)}... / {mentor.tag}
               </p>
             </div>
           </div>
@@ -660,7 +636,7 @@ function MentorChatModal({ mentor, onClose }: { mentor: DisplayMentor; onClose: 
               <div className="grid grid-cols-[1fr_44px] gap-2">
                 <textarea
                   className="max-h-28 min-h-12 resize-none rounded border border-[#26333d] bg-[#050607] px-3 py-2 text-xs leading-[1.5] text-white outline-none placeholder:text-[#586474]"
-                  placeholder={address ? "Ask a tactical question..." : "Connect wallet to ask this mentor"}
+                  placeholder={account ? "Ask a tactical question..." : "Connect wallet to ask this mentor"}
                   value={question}
                   onChange={(event) => setQuestion(event.target.value)}
                   onKeyDown={(event) => {
@@ -672,7 +648,7 @@ function MentorChatModal({ mentor, onClose }: { mentor: DisplayMentor; onClose: 
                 />
                 <button
                   className="flex h-12 items-center justify-center rounded border border-[rgba(45,212,191,0.6)] bg-[rgba(45,212,191,0.12)] text-[#2dd4bf] disabled:cursor-not-allowed disabled:opacity-40"
-                  disabled={!address || !question.trim() || busy}
+                  disabled={!account || !question.trim() || busy}
                   onClick={submitQuestion}
                   type="button"
                 >
@@ -711,8 +687,9 @@ function MentorChatModal({ mentor, onClose }: { mentor: DisplayMentor; onClose: 
 
 type MentorTone = keyof typeof cardToneClasses;
 type DisplayMentor = {
-  id: number;
-  tokenId?: number;
+  stateId: string;
+  sharePoolId: string;
+  revenuePoolId: string;
   name: string;
   tag: string;
   knowledgeType: string;
@@ -726,11 +703,12 @@ type DisplayMentor = {
 
 const toneCycle: MentorTone[] = ["regulatory", "defi", "security"];
 
-function toDisplayMentor(mentor: MentorMeta, index: number): DisplayMentor {
+function toDisplayMentor(mentor: Mentor, index: number): DisplayMentor {
   const tone = toneCycle[index % toneCycle.length];
   return {
-    id: mentor.tokenId,
-    tokenId: mentor.tokenId,
+    stateId: mentor.stateId,
+    sharePoolId: mentor.sharePoolId,
+    revenuePoolId: mentor.revenuePoolId,
     name: mentor.name,
     tag: mentor.category.toUpperCase(),
     knowledgeType: mentor.category,
@@ -738,7 +716,7 @@ function toDisplayMentor(mentor: MentorMeta, index: number): DisplayMentor {
     sharePrice: "-",
     confidenceScore: `${mentor.confidenceScore}%`,
     tone,
-    signal: mentor.status === 2 ? "VERIFIED" : "DRAFT",
+    signal: statusLabel(mentor.status) === "READY" ? "VERIFIED" : statusLabel(mentor.status),
     image: mentorImages[index % mentorImages.length],
   };
 }
@@ -753,7 +731,7 @@ function MarketplacePageInner() {
     const arr = [...onchainMentors];
     if (activeFilter === "TRENDING") return arr.sort((a, b) => b.totalQueries - a.totalQueries);
     if (activeFilter === "HIGHEST YIELD") return arr.sort((a, b) => b.confidenceScore - a.confidenceScore);
-    if (activeFilter === "NEW KNOWLEDGE") return arr.sort((a, b) => b.tokenId - a.tokenId);
+    if (activeFilter === "NEW KNOWLEDGE") return arr.sort((a, b) => b.mintedAtMs - a.mintedAtMs);
     return arr;
   }, [onchainMentors, activeFilter]);
   const allDisplayMentors = sortedMentors.map(toDisplayMentor);
@@ -859,7 +837,7 @@ function MarketplacePageInner() {
                 {searchQuery ? `No mentors found for "${searchQuery}".` : "No mentors registered on-chain yet. Be the first — go to My Mentors."}
               </div>
             ) : displayMentors.map((mentor, index) => (
-              <MentorCard key={mentor.id} mentor={mentor} index={index} />
+              <MentorCard key={mentor.stateId} mentor={mentor} index={index} />
             ))}
           </div>
 
@@ -896,21 +874,21 @@ function MarketplacePageInner() {
                   <div className="px-1 py-6 text-center text-[11px] text-[#4b5563]">No gap events detected on-chain yet.</div>
                 ) : (
                   gapEvents.slice(0, 3).map((event) => (
-                    <div key={event.txHash} className="grid grid-cols-[1.4fr_0.55fr_0.4fr_0.5fr_0.62fr_0.78fr] items-center gap-3 border-b border-[#14212a] px-1 py-2.5 text-[10px]">
+                    <div key={event.txDigest} className="grid grid-cols-[1.4fr_0.55fr_0.4fr_0.5fr_0.62fr_0.78fr] items-center gap-3 border-b border-[#14212a] px-1 py-2.5 text-[10px]">
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[rgba(45,212,191,0.24)] bg-[rgba(45,212,191,0.07)] text-[#2dd4bf]">
                           <Crosshair className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <span className="truncate font-bold text-[#e5e7eb]">
-                          {event.type === "GapResolved" ? "Gap resolved" : "Blind spot detected"} — Mentor #{event.tokenId}
+                          Blind spot detected — {event.stateId.slice(0, 8)}...
                         </span>
                       </div>
                       <span className="text-[#6b7280]">Oracle</span>
-                      <span className="font-bold text-[#d1d5db]">{event.count}</span>
-                      <span className={`w-fit rounded border px-2 py-1 text-[9px] font-bold tracking-[0.08em] ${event.type === "GapResolved" ? statusClasses.RISING : event.count > 10 ? statusClasses.HIGH : statusClasses.HOT}`}>
-                        {event.type === "GapResolved" ? "RESOLVED" : event.count > 10 ? "HIGH" : "ACTIVE"}
+                      <span className="font-bold text-[#d1d5db]">{event.gapCount}</span>
+                      <span className={`w-fit rounded border px-2 py-1 text-[9px] font-bold tracking-[0.08em] ${event.gapCount > 10 ? statusClasses.HIGH : statusClasses.HOT}`}>
+                        {event.gapCount > 10 ? "HIGH" : "ACTIVE"}
                       </span>
-                      <span className="font-extrabold text-[#2dd4bf]">Block {event.blockNumber.toString()}</span>
+                      <span className="font-extrabold text-[#2dd4bf]">{event.timestampMs ? new Date(event.timestampMs).toLocaleDateString() : "-"}</span>
                       <button className="min-h-0 whitespace-nowrap rounded border border-[rgba(45,212,191,0.4)] bg-[rgba(45,212,191,0.06)] px-3 py-1.5 font-mono text-[9px] font-bold tracking-[0.1em] text-[#2dd4bf]">
                         VIEW REPORT
                       </button>
@@ -953,7 +931,7 @@ function MarketplacePageInner() {
               <div>
                 {topDisplayMentors.map((mentor) => (
                   <div
-                    key={mentor.id}
+                    key={mentor.stateId}
                     className="grid grid-cols-[1.35fr_0.55fr_0.55fr_0.75fr] items-center gap-3 border-b border-[#15202a] py-2"
                   >
                     <div className="flex min-w-0 items-center gap-3">
@@ -967,7 +945,7 @@ function MarketplacePageInner() {
                     </div>
                     <span className="font-extrabold text-[#2dd4bf]">{mentor.change.split(" ")[0]}</span>
                     <Sparkline tone="teal" />
-                    <BuySharesButton className={`shrink-0 px-4 py-2 text-[10px] ${accentButtonClass}`} tokenId={mentor.tokenId}>
+                    <BuySharesButton className={`shrink-0 px-4 py-2 text-[10px] ${accentButtonClass}`} stateId={mentor.stateId} sharePoolId={mentor.sharePoolId}>
                       BUY SHARES
                     </BuySharesButton>
                   </div>

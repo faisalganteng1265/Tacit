@@ -1,6 +1,6 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton } from "@mysten/dapp-kit";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MouseEvent, ReactNode, useRef, useState } from "react";
@@ -114,62 +114,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
               }}
             />
           </div>
-          <ConnectButton.Custom>
-            {({ account, chain, mounted, openAccountModal, openChainModal, openConnectModal }) => {
-              const connected = mounted && account && chain;
-
-              if (!connected) {
-                return (
-                  <button
-                    className="flex cursor-pointer items-center gap-1.5 rounded border-0 bg-[#2dd4bf] px-3.5 py-[7px] font-mono text-[11px] font-extrabold tracking-[0.1em] text-black"
-                    type="button"
-                    onClick={openConnectModal}
-                  >
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                    CONNECT WALLET
-                  </button>
-                );
-              }
-
-              if (chain.unsupported) {
-                return (
-                  <button
-                    className="flex cursor-pointer items-center gap-1.5 rounded border border-red-500/60 bg-red-500/15 px-3.5 py-[7px] font-mono text-[11px] font-extrabold tracking-[0.1em] text-red-200"
-                    type="button"
-                    onClick={openChainModal}
-                  >
-                    WRONG NETWORK
-                  </button>
-                );
-              }
-
-              return (
-                <div className="flex items-center gap-2">
-                  <button
-                    className="hidden cursor-pointer items-center rounded border border-[#374151] bg-[#141a1f] px-2.5 py-[7px] font-mono text-[10px] font-bold tracking-[0.08em] text-[#d1d5db] sm:flex"
-                    type="button"
-                    onClick={openChainModal}
-                  >
-                    {chain.name}
-                  </button>
-                  <button
-                    className="flex cursor-pointer items-center rounded border-0 bg-[#2dd4bf] px-3.5 py-[7px] font-mono text-[11px] font-extrabold tracking-[0.1em] text-black"
-                    type="button"
-                    onClick={openAccountModal}
-                  >
-                    {account.displayName}
-                  </button>
-                </div>
-              );
-            }}
-          </ConnectButton.Custom>
+          <ConnectButton
+            connectText="CONNECT WALLET"
+            className="flex cursor-pointer items-center gap-1.5 rounded border-0 bg-[#2dd4bf] px-3.5 py-[7px] font-mono text-[11px] font-extrabold tracking-[0.1em] text-black"
+          />
         </div>
       </header>
 
@@ -218,10 +166,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
       <footer className="flex shrink-0 items-center justify-between rounded-lg border border-[#2a2d32] bg-[#050607]/95 px-6 py-2.5 shadow-2xl shadow-black/30">
         <p className="text-[9px] tracking-[0.1em] text-[#374151]">
-          © 2026 TACIT. POWERED BY 0G_PROTOCOL.
+          © 2026 TACIT. POWERED BY SUI + WALRUS + SEAL.
         </p>
         <div className="hidden gap-5 sm:flex">
-          {["0G HACKATHON", "DOCUMENTATION", "SECURITY AUDIT", "GITHUB"].map((link) => (
+          {["SUI OVERFLOW 2026", "DOCUMENTATION", "SECURITY AUDIT", "GITHUB"].map((link) => (
             <button
               key={link}
               className="cursor-pointer border-0 bg-transparent font-mono text-[9px] tracking-[0.1em] text-[#4b5563]"

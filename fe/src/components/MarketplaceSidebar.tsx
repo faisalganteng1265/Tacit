@@ -1,13 +1,14 @@
 "use client";
 
+import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type MouseEvent } from "react";
-import { useWriteContract } from "wagmi";
 
 import { useTxToast } from "@/components/ToastProvider";
-import { MARKETPLACE_ADDRESS, marketplaceAbi } from "@/lib/contracts";
+import { PACKAGE_ID } from "@/lib/contracts";
 
 export const sidebarLinks = [
   { label: "MARKETPLACE", icon: "⊞", href: "/marketplace" },
@@ -24,7 +25,7 @@ const nodeLogoSrc =
 export default function MarketplaceSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { writeContractAsync } = useWriteContract();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const txToast = useTxToast();
   const [isMintOpen, setIsMintOpen] = useState(false);
   const [mintName, setMintName] = useState("");
@@ -56,14 +57,19 @@ export default function MarketplaceSidebar() {
     setBusy(true);
 
     try {
-      await txToast("Mint mentor", () =>
-        writeContractAsync({
-          address: MARKETPLACE_ADDRESS,
-          abi: marketplaceAbi,
-          functionName: "registerMentor",
-          args: [mintName, mintCategory || "General", "pending"],
-        }),
-      );
+      await txToast("Mint mentor", async () => {
+        const tx = new Transaction();
+        tx.moveCall({
+          target: `${PACKAGE_ID}::marketplace::register_mentor`,
+          arguments: [
+            tx.pure.string(mintName),
+            tx.pure.string(mintCategory || "General"),
+            tx.pure.string(""),
+            tx.object.clock(),
+          ],
+        });
+        return (await signAndExecute({ transaction: tx })).digest;
+      });
       setMintName("");
       setMintCategory("");
       setIsMintOpen(false);
@@ -87,7 +93,7 @@ export default function MarketplaceSidebar() {
             <div>
               <p className="text-[12px] font-bold tracking-[0.1em] text-white">TACIT</p>
               <p className="text-[10px] uppercase tracking-[0.08em] text-[#4b5563]">
-                0G MAINNET · ENCLAVE
+                SUI TESTNET · SEAL
               </p>
             </div>
           </div>
