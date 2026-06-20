@@ -213,10 +213,21 @@ export async function verifyQuerySettlement(
   stateId: string,
   txDigest: string
 ): Promise<{ ok: boolean; userAddress?: string; error?: string }> {
-  const tx = await getClient().getTransactionBlock({
-    digest: txDigest,
-    options: { showEffects: true, showEvents: true, showInput: true },
-  });
+  // The wallet's own RPC may certify the tx slightly before our fullnode has
+  // indexed it — retry briefly instead of failing on a fresh digest.
+  let tx;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      tx = await getClient().getTransactionBlock({
+        digest: txDigest,
+        options: { showEffects: true, showEvents: true, showInput: true },
+      });
+      break;
+    } catch (err) {
+      if (attempt >= 5) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
+  }
 
   if (tx.effects?.status.status !== "success") {
     return { ok: false, error: "Settlement transaction did not succeed" };

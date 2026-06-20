@@ -79,11 +79,14 @@ router.post("/", async (req: Request, res: Response) => {
     const newConfidence = signalsLowConfidence ? 30 : hasAnswer ? 85 : 50;
 
     // 6. Fire-and-forget oracle writes — don't delay the response on these.
-    Promise.all([
-      oracleRecordQuery(stateId),
-      oracleUpdateConfidence(stateId, newConfidence),
-      signalsLowConfidence ? oracleIncrementGap(stateId) : Promise.resolve(),
-    ]).catch((err) => console.error("[query] oracle update failed:", err));
+    // Sequential, not Promise.all: each call submits a tx that mutates the
+    // owned OracleCap object, and Sui rejects concurrent txs that lock the
+    // same object version ("already locked by a different transaction").
+    (async () => {
+      await oracleRecordQuery(stateId);
+      await oracleUpdateConfidence(stateId, newConfidence);
+      if (signalsLowConfidence) await oracleIncrementGap(stateId);
+    })().catch((err) => console.error("[query] oracle update failed:", err));
 
     res.json({
       ok: true,
