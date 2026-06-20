@@ -27,9 +27,56 @@ let walrusClient: WalrusClient | null = null;
 function getWalrusClient(): WalrusClient {
   if (!walrusClient) {
     const network = (process.env.SUI_NETWORK ?? "testnet") as "testnet" | "mainnet";
-    walrusClient = new WalrusClient({ network, suiClient: getClient() });
+    // Direct sliver writes from a single residential/dev connection to all
+    // storage nodes are unreliable (NotEnoughBlobConfirmationsError) — route
+    // through Mysten's public upload relay instead, same as `walrus` CLI.
+    const uploadRelayHost =
+      network === "testnet" ? "https://upload-relay.testnet.walrus.space" : undefined;
+    walrusClient = new WalrusClient({
+      network,
+      suiClient: getClient(),
+      uploadRelay: uploadRelayHost ? { host: uploadRelayHost, sendTip: { max: 5_000_000 } } : undefined,
+    });
   }
   return walrusClient;
+}
+
+// Storing a blob costs WAL, not SUI — verified live against testnet on
+// 2026-06-21 (package/object ids below are Mysten's official testnet WAL
+// exchange, same one the `walrus` CLI's `get-wal` command swaps through).
+// There's no public 1:1 exchange on mainnet, so this only runs on testnet.
+const WAL_COIN_TYPE = "0x8270feb7375eee355e64fdb69c50abb6b5f9393a722883c1cf45f8e26048810a::wal::WAL";
+const WAL_EXCHANGE_PACKAGE_ID = "0x82593828ed3fcb8c6a235eac9abd0adbe9c5f9bbffa9b1e7a45cdd884481ef9f";
+const WAL_EXCHANGE_OBJECT_ID = "0xf4d164ea2def5fe07dc573992a029e010dba09b1a8dcbc44c5c2e79567f39073";
+const WAL_TOPUP_THRESHOLD_MIST = 10_000_000n; // 0.01 WAL
+const WAL_TOPUP_SWAP_SUI_MIST = 50_000_000n; // 0.05 SUI -> 0.05 WAL at the exchange's 1:1 rate
+
+async function ensureWalBalance(): Promise<void> {
+  if ((process.env.SUI_NETWORK ?? "testnet") !== "testnet") return;
+
+  const keypair = getOracleKeypair();
+  const address = keypair.toSuiAddress();
+  const { totalBalance } = await getClient().getBalance({ owner: address, coinType: WAL_COIN_TYPE });
+  if (BigInt(totalBalance) >= WAL_TOPUP_THRESHOLD_MIST) return;
+
+  console.log(`[storage] WAL balance low (${totalBalance} MIST) — topping up via testnet exchange...`);
+  const tx = new Transaction();
+  const [suiForWal] = tx.splitCoins(tx.gas, [WAL_TOPUP_SWAP_SUI_MIST]);
+  const walCoin = tx.moveCall({
+    target: `${WAL_EXCHANGE_PACKAGE_ID}::wal_exchange::exchange_all_for_wal`,
+    arguments: [tx.object(WAL_EXCHANGE_OBJECT_ID), suiForWal],
+  });
+  tx.transferObjects([walCoin], address);
+
+  const result = await getClient().signAndExecuteTransaction({
+    signer: keypair,
+    transaction: tx,
+    options: { showEffects: true },
+  });
+  if (result.effects?.status.status !== "success") {
+    throw new Error(`WAL top-up failed: ${result.effects?.status.error}`);
+  }
+  console.log(`[storage] WAL top-up tx: ${result.digest}`);
 }
 
 // Seal identity is namespaced to the mentor's `MentorState` object id, so
@@ -55,6 +102,7 @@ export async function uploadKnowledge(
     data: plaintext,
   });
 
+  await ensureWalBalance();
   const { blobId } = await getWalrusClient().writeBlob({
     blob: encryptedObject,
     deletable: true,
