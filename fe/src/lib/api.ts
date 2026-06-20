@@ -23,24 +23,25 @@ function postJson<T>(path: string, body: JsonBody): Promise<T> {
   });
 }
 
-export type TxPayload = {
-  to: `0x${string}`;
-  data: `0x${string}`;
-  value: string;
+export type MentorListEntry = {
+  nftId: string;
+  stateId: string;
+  creator: string;
+  name: string;
 };
 
 export type MarketQuote = {
-  tokenId: number;
+  stateId: string;
   amount: number;
-  sharePriceWei: string | null;
-  buySharesCostWei: string | null;
-  queryPriceWei: string;
+  sharePoolId: string;
+  sharePriceMist: number;
+  buySharesCostMist: number;
+  queryPriceMist: number;
 };
 
 export type MarketAccess = {
-  checked: boolean;
   hasAccess: boolean;
-  reason: "contracts-not-configured" | "shareholder" | "no-access";
+  reason: "shareholder" | "allow-listed" | "no-access";
   shareBalance: number;
 };
 
@@ -49,35 +50,26 @@ export type QueryResponse = {
   answer: string;
   teeVerified: boolean;
   chatId: string;
-  providerAddress: string;
   model: string;
-  revenue: { txHash: string | null; recordedQuery: boolean };
+  mentor: { stateId: string; blobId: string };
+  access: MarketAccess;
+  settlement: { txDigest: string; querier: string };
   oracle: { confidenceUpdated: number; gapFlagged: boolean };
 };
 
 export const api = {
-  getMentors: () => request<{ ok: true; mentors: unknown[] }>("/market/mentors"),
-  getAccess: (tokenId: number, userAddress: string) =>
+  getMentors: () => request<{ ok: true; mentors: MentorListEntry[] }>("/market/mentors"),
+  getAccess: (stateId: string, userAddress: string) =>
     request<{ ok: true; access: MarketAccess }>(
-      `/market/access?tokenId=${tokenId}&userAddress=${userAddress}`,
+      `/market/access?stateId=${stateId}&userAddress=${userAddress}`,
     ),
-  getQuote: (tokenId: number, amount: number) =>
-    request<{ ok: true; quote: MarketQuote }>(`/market/quote?tokenId=${tokenId}&amount=${amount}`),
-  buildBuySharesTx: (body: { tokenId: number; amount: number; valueWei?: string }) =>
-    postJson<{ ok: true; tx: TxPayload; quote: MarketQuote }>("/market/tx/buy-shares", body),
-  buildExecuteQueryTx: (body: { tokenId: number; valueWei?: string }) =>
-    postJson<{ ok: true; tx: TxPayload; quote: MarketQuote }>("/market/tx/execute-query", body),
-  getQueryMessage: (body: { tokenId: number; question: string; userAddress: string }) =>
-    postJson<{ ok: true; message: string; signedAt: number }>("/market/query-message", body),
-  sendQuery: (body: JsonBody) => postJson<QueryResponse>("/query", body),
+  getQuote: (stateId: string, amount: number) =>
+    request<{ ok: true; quote: MarketQuote }>(`/market/quote?stateId=${stateId}&amount=${amount}`),
+  sendQuery: (body: { stateId: string; question: string; settlementTxDigest: string }) =>
+    postJson<QueryResponse>("/query", body),
   uploadKnowledge: (formData: FormData) =>
-    request<{ ok: true; rootHash: string; sizeBytes: number; txHash: string | null; message: string }>(
+    request<{ ok: true; blobId: string; sizeBytes: number; txDigest: string; message: string }>(
       "/upload",
       { method: "POST", body: formData },
     ),
-  getOracleServices: () => request<{ ok: true; services: unknown[] }>("/oracle/services"),
-  signTransfer: (body: JsonBody) =>
-    postJson<{ ok: true; sealedKey: `0x${string}`; proofs: unknown[] }>("/oracle/sign-transfer", body),
-  signClone: (body: JsonBody) =>
-    postJson<{ ok: true; sealedKey: `0x${string}`; proofs: unknown[] }>("/oracle/sign-clone", body),
 };
