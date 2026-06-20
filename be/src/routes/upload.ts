@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { uploadKnowledge } from "../lib/storage.js";
-import { getMentorState, oracleUpdateBlobId } from "../lib/sui.js";
+import { getMentorState, oracleResolveGap, oracleUpdateBlobId } from "../lib/sui.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -35,16 +35,25 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
   }
 
   try {
-    await getMentorState(stateId); // throws if the mentor doesn't exist on-chain
+    const mentorState = await getMentorState(stateId); // throws if the mentor doesn't exist on-chain
 
     const { blobId, sizeBytes } = await uploadKnowledge(stateId, content);
     const txDigest = await oracleUpdateBlobId(stateId, blobId, 50);
+
+    // A knowledge update is the mentor's response to an open gap — resolve
+    // one (oracle_resolve_gap only steps by 1, mirroring how each
+    // low-confidence query only increments by 1).
+    const gapResolved = mentorState.gapCount > 0;
+    if (gapResolved) {
+      await oracleResolveGap(stateId);
+    }
 
     res.json({
       ok: true,
       blobId,
       sizeBytes,
       txDigest,
+      gapResolved,
       message: "Knowledge encrypted via Seal, stored on Walrus, blob id anchored on-chain.",
     });
   } catch (err) {

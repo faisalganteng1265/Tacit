@@ -4,7 +4,7 @@ import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-ki
 import { Transaction } from "@mysten/sui/transactions";
 import { useState, type FormEvent } from "react";
 
-import { useTxToast } from "@/components/ToastProvider";
+import { useToast, useTxToast } from "@/components/ToastProvider";
 import { statusLabel, useMentorActivityEvents, useMentors } from "@/hooks/useMarketplace";
 import { api } from "@/lib/api";
 import { PACKAGE_ID } from "@/lib/contracts";
@@ -20,6 +20,7 @@ export default function MentorsView() {
   const { data: activityEvents = [] } = useMentorActivityEvents();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const txToast = useTxToast();
+  const addToast = useToast();
   const [isMintOpen, setIsMintOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [mintName, setMintName] = useState("");
@@ -102,7 +103,14 @@ export default function MentorsView() {
     if (uploadFile) formData.set("file", uploadFile);
     else formData.set("text", uploadText);
     try {
-      await txToast("Upload knowledge", () => api.uploadKnowledge(formData));
+      const result = await txToast("Upload knowledge", () => api.uploadKnowledge(formData));
+      if (result.gapResolved) {
+        addToast({
+          title: "Gap resolved",
+          description: "This knowledge update closed one open gap report.",
+          variant: "success",
+        });
+      }
       setUploadStateId("");
       setUploadText("");
       setUploadFile(null);

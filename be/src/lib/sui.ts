@@ -38,16 +38,35 @@ export function getOracleKeypair(): Ed25519Keypair {
   return keypair;
 }
 
-async function signAndExecute(tx: Transaction): Promise<string> {
-  const result = await getClient().signAndExecuteTransaction({
-    signer: getOracleKeypair(),
-    transaction: tx,
-    options: { showEffects: true, showEvents: true },
-  });
-  if (result.effects?.status.status !== "success") {
-    throw new Error(`Transaction failed: ${result.effects?.status.error}`);
+// `buildTx` is called fresh on every attempt — a stale-object-version error
+// means the *resolved* object ref inside a previously-built Transaction is
+// outdated, so retrying with the same instance would just fail again the
+// same way. Rebuilding forces the SDK to re-resolve the object's current
+// version from the fullnode.
+async function signAndExecute(buildTx: () => Transaction): Promise<string> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const result = await getClient().signAndExecuteTransaction({
+        signer: getOracleKeypair(),
+        transaction: buildTx(),
+        options: { showEffects: true, showEvents: true },
+      });
+      if (result.effects?.status.status !== "success") {
+        throw new Error(`Transaction failed: ${result.effects?.status.error}`);
+      }
+      return result.digest;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const status = (err as { status?: number }).status;
+      const isObjectVersionRace =
+        message.includes("is unavailable for consumption") || message.includes("already locked by a different transaction");
+      // Public testnet RPC nodes occasionally 5xx/timeout on a perfectly
+      // valid request — transient infra noise, not a reason to give up.
+      const isTransientHttpError = typeof status === "number" && status >= 500;
+      if ((!isObjectVersionRace && !isTransientHttpError) || attempt >= 5) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
   }
-  return result.digest;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,54 +78,64 @@ export async function oracleUpdateBlobId(
   blobId: string,
   confidence: number
 ): Promise<string> {
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::mentor_nft::oracle_update_blob_id`,
-    arguments: [
-      tx.object(ORACLE_CAP_ID),
-      tx.object(stateId),
-      tx.pure.string(blobId),
-      tx.pure.u8(confidence),
-      tx.object.clock(),
-    ],
+  return signAndExecute(() => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${PACKAGE_ID}::mentor_nft::oracle_update_blob_id`,
+      arguments: [
+        tx.object(ORACLE_CAP_ID),
+        tx.object(stateId),
+        tx.pure.string(blobId),
+        tx.pure.u8(confidence),
+        tx.object.clock(),
+      ],
+    });
+    return tx;
   });
-  return signAndExecute(tx);
 }
 
 export async function oracleUpdateConfidence(stateId: string, score: number): Promise<string> {
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::mentor_nft::oracle_update_confidence`,
-    arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId), tx.pure.u8(score), tx.object.clock()],
+  return signAndExecute(() => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${PACKAGE_ID}::mentor_nft::oracle_update_confidence`,
+      arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId), tx.pure.u8(score), tx.object.clock()],
+    });
+    return tx;
   });
-  return signAndExecute(tx);
 }
 
 export async function oracleIncrementGap(stateId: string): Promise<string> {
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::mentor_nft::oracle_increment_gap`,
-    arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId)],
+  return signAndExecute(() => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${PACKAGE_ID}::mentor_nft::oracle_increment_gap`,
+      arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId)],
+    });
+    return tx;
   });
-  return signAndExecute(tx);
 }
 
 export async function oracleResolveGap(stateId: string): Promise<string> {
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::mentor_nft::oracle_resolve_gap`,
-    arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId)],
+  return signAndExecute(() => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${PACKAGE_ID}::mentor_nft::oracle_resolve_gap`,
+      arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId)],
+    });
+    return tx;
   });
-  return signAndExecute(tx);
 }
 
 export async function oracleRecordQuery(stateId: string): Promise<string> {
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::mentor_nft::oracle_record_query`,
-    arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId)],
+  return signAndExecute(() => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${PACKAGE_ID}::mentor_nft::oracle_record_query`,
+      arguments: [tx.object(ORACLE_CAP_ID), tx.object(stateId)],
+    });
+    return tx;
   });
-  return signAndExecute(tx);
 }
 
 // ---------------------------------------------------------------------------

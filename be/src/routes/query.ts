@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { downloadKnowledge } from "../lib/storage.js";
-import { runInference } from "../lib/compute.js";
+import { NO_KNOWLEDGE_TAG, runInference } from "../lib/compute.js";
 import {
   checkQueryAccess,
   getMentorState,
@@ -69,13 +69,14 @@ router.post("/", async (req: Request, res: Response) => {
     // 4. Run inference inside an Atoma confidential-compute (TEE) node.
     const result = await runInference(question, knowledgeContext, "Mentor");
 
-    // 5. Heuristic confidence scoring (same business logic as before; no
-    //    SDK dependency, so it ports unchanged).
-    const hasAnswer = result.answer.length > 50;
-    const signalsLowConfidence =
-      result.answer.toLowerCase().includes("i don't know") ||
-      result.answer.toLowerCase().includes("not enough information") ||
-      result.answer.toLowerCase().includes("knowledge base does not contain");
+    // 5. Confidence scoring: the model is instructed to lead with a literal
+    //    tag (not an English phrase) when it can't answer confidently, so
+    //    this works regardless of what language it replies in.
+    const signalsLowConfidence = result.answer.trim().startsWith(NO_KNOWLEDGE_TAG);
+    const displayAnswer = signalsLowConfidence
+      ? result.answer.replace(NO_KNOWLEDGE_TAG, "").trim()
+      : result.answer;
+    const hasAnswer = displayAnswer.length > 50;
     const newConfidence = signalsLowConfidence ? 30 : hasAnswer ? 85 : 50;
 
     // 6. Fire-and-forget oracle writes — don't delay the response on these.
@@ -90,7 +91,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     res.json({
       ok: true,
-      answer: result.answer,
+      answer: displayAnswer,
       teeVerified: result.teeVerified,
       chatId: result.chatId,
       model: result.model,

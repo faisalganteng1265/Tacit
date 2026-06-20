@@ -14,6 +14,13 @@ const ATOMA_MODEL = process.env.ATOMA_MODEL ?? "meta-llama/Llama-3.3-70B-Instruc
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "meta-llama/llama-3.3-70b-instruct";
 const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
 
+// Language-independent low-confidence signal: matching English phrases like
+// "i don't know" breaks the moment the model answers in the user's own
+// language (e.g. Indonesian), so the model is instructed to always emit
+// this literal tag instead, regardless of what language the rest of its
+// reply is in.
+export const NO_KNOWLEDGE_TAG = "[NO_KNOWLEDGE]";
+
 export type ServiceInfo = {
   model: string;
 };
@@ -40,13 +47,13 @@ export async function runInference(
   knowledgeContext: string,
   mentorName: string
 ): Promise<InferenceResult> {
-  const systemPrompt = `You are ${mentorName}, an AI Mentor. Answer questions based strictly on the following private expert knowledge. If the knowledge does not contain enough information to answer confidently, say so explicitly.
+  const systemPrompt = `You are ${mentorName}, an AI Mentor. Answer questions based strictly on the following private expert knowledge. Always reply in the same language the user asked in.
 
 --- KNOWLEDGE BASE ---
 ${knowledgeContext}
 --- END KNOWLEDGE BASE ---
 
-Respond concisely and practically. Do not fabricate information not present in the knowledge base.`;
+Respond concisely and practically. Do not fabricate information not present in the knowledge base. If the knowledge base does not contain enough information to answer confidently, start your entire reply with the exact literal tag ${NO_KNOWLEDGE_TAG} (this tag must stay in English even though the rest of your reply is in the user's language), then explain what's missing.`;
 
   return COMPUTE_PROVIDER === "openrouter"
     ? runOpenRouterInference(systemPrompt, question)

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { useGapEvents, useMentors } from "@/hooks/useMarketplace";
@@ -91,7 +92,7 @@ export default function GapsView() {
     const previousCount = earlier ? earlier.gapCount : 0;
     const status = event.gapCount < previousCount ? "RESOLVED" : "IN REVIEW";
     const priority = event.gapCount > 20 ? "CRITICAL" : event.gapCount > 10 ? "HIGH" : event.gapCount > 3 ? "MEDIUM" : "LOW";
-    const confidence = Math.max(20, 100 - event.gapCount * 4);
+    const confidence = mentor?.confidenceScore ?? 0;
     return {
       title: status === "RESOLVED" ? "Gap resolved by oracle" : "Low-confidence answer detected",
       mentor: mentor?.name ?? "Mentor",
@@ -261,10 +262,12 @@ export default function GapsView() {
                     </div>
                     <p className="text-[9px] text-[#707b89]">{severity}</p>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <button className={`${accentButtonClass} px-2 py-1 text-[8px]`}>OPEN REPORT</button>
-                    <button className="text-[9px] font-bold text-[#2dd4bf]">ASSIGN UPDATE</button>
-                  </div>
+                  <Link
+                    href={`/marketplace?q=${encodeURIComponent(mentor)}`}
+                    className={`${accentButtonClass} px-2 py-1 text-center text-[8px]`}
+                  >
+                    OPEN REPORT
+                  </Link>
                 </div>
               );
             })}

@@ -68,7 +68,7 @@ export const api = {
   sendQuery: (body: { stateId: string; question: string; settlementTxDigest: string }) =>
     postJson<QueryResponse>("/query", body),
   uploadKnowledge: (formData: FormData) =>
-    request<{ ok: true; blobId: string; sizeBytes: number; txDigest: string; message: string }>(
+    request<{ ok: true; blobId: string; sizeBytes: number; txDigest: string; gapResolved: boolean; message: string }>(
       "/upload",
       { method: "POST", body: formData },
     ),
