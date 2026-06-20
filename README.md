@@ -1,19 +1,20 @@
 <p align="center">
-  <img src="fe/public/Dasboard.png" alt="Tacit" width="720" />
+  <img src="fe/public/dashboard-sui.png" alt="Tacit" width="720" />
 </p>
 
 <h1 align="center">Tacit</h1>
 
 <p align="center">
   <strong>The first marketplace for knowledge that isn't on the internet.</strong><br/>
-  Experts mint themselves as Intelligent NFTs. Fans co-own the upside. No operator.
+  Experts mint themselves as on-chain AI mentors. Fans co-own the upside. No operator.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/0G-Chain%20%2B%20Storage%20%2B%20Compute%20%2B%20iNFT-00D4AA?style=flat-square" alt="0G" />
-  <img src="https://img.shields.io/badge/0G-APAC%20Hackathon%202026-00D4AA?style=flat-square" alt="0G APAC" />
-  <img src="https://img.shields.io/badge/Track-Web%204.0%20%2F%20SocialFi-7C3AED?style=flat-square" alt="Track" />
-  <img src="https://img.shields.io/badge/Standard-ERC--7857-6e44ff?style=flat-square" alt="ERC-7857" />
+  <img src="https://img.shields.io/badge/Sui-Move%20Contracts-6FBCF0?style=flat-square" alt="Sui" />
+  <img src="https://img.shields.io/badge/Walrus-Knowledge%20%2B%20Memory-00C2A8?style=flat-square" alt="Walrus" />
+  <img src="https://img.shields.io/badge/Seal-Policy--Gated%20Decryption-8B5CF6?style=flat-square" alt="Seal" />
+  <img src="https://img.shields.io/badge/Atoma-Confidential%20TEE%20Inference-FF6B6B?style=flat-square" alt="Atoma" />
+  <img src="https://img.shields.io/badge/Sui%20Overflow-2026%20%E2%80%94%20Walrus%20Track-6FBCF0?style=flat-square" alt="Sui Overflow 2026" />
   <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT" />
 </p>
 
@@ -21,7 +22,7 @@
   <a href="#">Live Demo</a> ·
   <a href="#how-it-works">How It Works</a> ·
   <a href="#architecture">Architecture</a> ·
-  <a href="#0g-integration">0G Integration</a> ·
+  <a href="#walrus-integration">Walrus Integration</a> ·
   <a href="#local-development">Run Locally</a>
 </p>
 
@@ -29,14 +30,15 @@
 
 ## Overview
 
-Tacit is a marketplace for the knowledge that is **deliberately not on the internet** — regulatory tactics, founder playbooks, deal mechanics, insider patterns. Experts mint themselves as **Intelligent NFTs** on 0G Chain, fans buy fractional **access shares** along a bonding curve, and every query is answered inside a **TEE on 0G Compute** so even the operator can never read the knowledge base.
+Tacit is a marketplace for the knowledge that is **deliberately not on the internet** — regulatory tactics, founder playbooks, deal mechanics, insider patterns. Experts mint themselves as **on-chain AI mentors** on Sui, fans buy fractional **access shares** along a bonding curve, and every query is answered against knowledge that's encrypted end-to-end and gated by a programmable **Seal** policy — no centralized party ever holds a decryption key.
 
-Built end-to-end on **0G's modular AI x Web3 stack** — agents are minted as iNFTs (ERC-7857) on 0G Chain, knowledge is encrypted and Merkle-rooted on 0G Storage, inference is sealed and attested on 0G Compute, and revenue flows through a non-custodial royalty + vesting escrow.
+Built on the **Sui + Walrus + Seal + Atoma** stack: mentor identity lives as a Move object on Sui, knowledge is encrypted and stored on **Walrus**, decryption is authorized by an on-chain **Seal** policy (share balance, oracle, or allow-list — enforced by Seal's key-servers, not by Tacit), inference runs inside **Atoma**'s confidential-compute network, and — the part that makes each mentor an actual *agent* rather than a stateless Q&A bot — every conversation is remembered across sessions via **MemWal (Walrus Memory)**.
 
-- **Identity** — mentors minted as iNFTs (ERC-7857) on 0G Chain with `iTransfer` / `iClone` multi-proof transfer
-- **Memory** — encrypted knowledge stored on 0G Storage (KV for active context, Log for archive); only the root hash is on-chain
-- **Verification** — sealed inference inside a TEE on 0G Compute; the sealed key is unwrapped only inside the enclave
-- **Execution** — bounded revenue distribution: queries pay an atomic split (mentor royalty + pro-rata shareholder dividend), vesting handled by a 0G escrow contract
+- **Identity** — mentors minted as a `MentorNFT` (owned object) paired with a shared `MentorState` on Sui; transfer/clone are plain Move calls, no oracle proof required
+- **Knowledge** — encrypted client-side via Seal, stored as a blob on Walrus; only the blob id is anchored on-chain
+- **Cross-session memory** — every query + answer for a given `(mentor, querier)` pair is written to **MemWal**, and recalled before the next answer — mentors remember *you*, not just their static knowledge base
+- **Access control** — Seal's `seal_approve` policy checks share balance, oracle address, or allow-list directly on-chain; the backend never hands out a key
+- **Execution** — bounded revenue distribution: queries pay an atomic split (60% mentor / 25% curators / 15% platform), vesting handled by an on-chain schedule with stale-period clawback
 
 ---
 
@@ -52,8 +54,9 @@ Today, the most valuable knowledge sits in a few hundred heads and has no moneti
 | Online courses (Udemy, Maven) | Static, public the moment they ship, instantly stale |
 | Friend.tech-style social tokens | Pure speculation, no underlying utility, no upgrade path |
 | LLM fine-tunes on private data | Operator can exfiltrate; no royalty path; no privacy guarantee |
+| Plain chatbot wrappers | No memory across sessions — every conversation starts from zero |
 
-Tacit is the first design where the expert earns **forever**, the fan owns **economic upside**, and the learner gets **verifiable confidentiality** — in a single primitive.
+Tacit is the first design where the expert earns **forever**, the fan owns **economic upside**, and the learner gets **verifiable confidentiality and an agent that remembers them** — in a single primitive.
 
 ---
 
@@ -61,15 +64,18 @@ Tacit is the first design where the expert earns **forever**, the fan owns **eco
 
 > Scenario: a former regulator has 12 years of tactical insight into Indonesian compliance loopholes. She cannot publish it. Tacit lets her tokenize it.
 
-1. **Mint Mentor iNFT** — she connects her wallet, mints an `AIMentorINFT` (ERC-7857), retaining 50% of initial shares.
-2. **Upload Encrypted Knowledge** — her framework is encrypted client-side, uploaded to 0G Storage; only the Merkle root (`storageRef`) is anchored on-chain.
-3. **Bonding Curve Trading** — fans buy access shares through `AccessSharesMarket`; price rises monotonically on each buy.
-4. **Sealed Query** — a shareholder asks a question. The oracle service verifies their share balance, fetches the encrypted blob, unwraps the sealed key **inside the TEE**, runs inference, returns the answer.
-5. **Confidence Signal** — the LLM self-reports confidence; if below threshold, `gapCount` is incremented on-chain — a public sell signal.
-6. **Atomic Settlement** — `executeQuery` is `payable`; `RevenueDistributor` splits the payment into vested mentor royalty + pro-rata shareholder dividend in a single transaction.
-7. **Mentor Patches the Gap** — she sees the public gap, uploads an addendum, `storageRef` is updated, `gapCount` resets. Share price recovers.
+1. **Register Mentor** — she connects her wallet, calls `marketplace::register_mentor`, minting a `MentorNFT` + `MentorState` + `SharePool` + `RevenuePool` + `VestingSchedule` in one signed transaction. She retains the initial share allocation.
+2. **Upload Encrypted Knowledge** — her framework is encrypted via **Seal** (identity = her mentor's `MentorState` id) and stored as a blob on **Walrus**; only the blob id is anchored on-chain.
+3. **Bonding Curve Trading** — fans buy access shares through `shares_market`; price rises monotonically on each buy.
+4. **Gated Query** — a shareholder asks a question. The backend verifies on-chain settlement and share balance, downloads the blob from Walrus, and Seal's key-servers authorize decryption directly against the on-chain policy.
+5. **Memory Recall** — before answering, the backend recalls past exchanges between *this specific querier and this mentor* from **MemWal** — the mentor remembers last week's conversation, not just its static knowledge.
+6. **Confidential Inference** — the question, knowledge, and recalled memory go to **Atoma**'s confidential-compute network (or an OpenRouter dev fallback when Atoma access is pending — see [Compute Provider](#compute-provider)).
+7. **Confidence Signal** — the model is instructed to lead its reply with a literal, language-independent tag when it can't answer confidently; if so, `gap_count` is incremented on-chain — a public sell signal.
+8. **Atomic Settlement** — `execute_query` is paid in SUI; `revenue` splits the payment into mentor royalty + pro-rata curator dividend in the same transaction.
+9. **Memory Write** — the exchange is written back to MemWal, so the mentor remembers it next time this same user asks something — in a different session, a different day.
+10. **Mentor Patches the Gap** — she sees the public gap, re-uploads an addendum; the blob id updates and one open gap resolves. Share price recovers.
 
-**Result:** mentors earn royalty forever, shareholders own a productive asset that improves over time, learners get tactical intelligence that cannot be screenshotted off the internet.
+**Result:** mentors earn royalty forever, shareholders own a productive asset that improves over time, learners get tactical intelligence that cannot be screenshotted off the internet — answered by an agent that actually remembers them.
 
 ---
 
@@ -80,26 +86,29 @@ Tacit is the first design where the expert earns **forever**, the fan owns **eco
 ```mermaid
 sequenceDiagram
     autonumber
-    participant U as Shareholder
-    participant FE as Frontend (Next.js)
-    participant MP as MentorMarketplace
-    participant OR as Oracle Service
-    participant ST as 0G Storage
-    participant TEE as 0G Compute (TEE)
-    participant RD as RevenueDistributor
+    participant U as Shareholder Wallet
+    participant FE as Frontend (Next.js + dapp-kit)
+    participant SUI as Sui (marketplace::execute_query)
+    participant BE as Backend (Express)
+    participant WAL as Walrus
+    participant SEAL as Seal Key Servers
+    participant MEM as MemWal (Walrus Memory)
+    participant AI as Atoma TEE / OpenRouter
 
-    U->>FE: Ask question (mentor tokenId)
-    FE->>MP: executeQuery() — payable
-    MP->>RD: settle payment (atomic split)
-    MP-->>FE: tx hash + QueryExecuted event
-    FE->>OR: POST /query (tokenId, question, settlement tx)
-    OR->>MP: verify share balance + settlement
-    OR->>ST: fetch encrypted blob by storageRef
-    OR->>TEE: sealed inference (unwrap key in enclave)
-    TEE-->>OR: answer + confidence score
-    OR->>MP: updateConfidence(tokenId, score)
-    OR-->>FE: answer (streamed)
-    FE-->>U: rendered markdown
+    U->>FE: Ask question
+    FE->>SUI: execute_query() — pays SUI, checked against share balance
+    SUI-->>FE: tx digest + QueryExecuted event
+    FE->>BE: POST /query (stateId, question, settlement tx digest)
+    BE->>SUI: verify settlement + re-derive real querier address
+    BE->>WAL: readBlob(blob_id) — encrypted knowledge
+    BE->>SEAL: seal_approve policy dry-run + decrypt
+    BE->>MEM: recall(question, namespace = mentor + querier)
+    BE->>AI: infer(question, knowledge, recalled memory)
+    AI-->>BE: answer + confidence
+    BE->>MEM: remember(question + answer, same namespace)
+    BE->>SUI: oracle_record_query / update_confidence / increment_gap
+    BE-->>FE: answer + memory.recalled flag
+    FE-->>U: rendered markdown + "🧠 recalled past context" badge
 ```
 
 ### System Components
@@ -107,48 +116,95 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     subgraph CLIENT["Client Surface"]
-        FE[Next.js 16<br/>RainbowKit · viem · wagmi]
+        FE[Next.js 16<br/>dapp-kit · React Query]
     end
 
-    subgraph CONTRACTS["0G Chain — Contracts"]
-        MP[MentorMarketplace]
-        INFT[AIMentorINFT<br/>ERC-7857]
-        SH[AccessSharesMarket<br/>Bonding Curve]
-        RD[RevenueDistributor]
-        VE[VestingEscrow]
+    subgraph SUI_MOVE["Sui — Move Package"]
+        MKT[marketplace]
+        NFT[mentor_nft]
+        SHM[shares_market]
+        REV[revenue]
+        VST[vesting]
+        SP[seal_policy]
     end
 
-    subgraph SERVICE["Oracle Service"]
-        QR[/query]
-        UP[/upload]
-        OC[/oracle]
-        MK[/market]
+    subgraph BACKEND["Backend (Express)"]
+        QR["/query"]
+        UP["/upload"]
+        OR["/oracle"]
+        MK["/market"]
     end
 
-    subgraph ZG["0G Stack"]
-        STORE[(0G Storage<br/>KV + Log)]
-        TEE[(0G Compute<br/>Sealed TEE Inference)]
+    subgraph WALRUS_STACK["Walrus Stack"]
+        WAL[("Walrus Blobs<br/>knowledge")]
+        SEALK[Seal Key Servers]
+        MEMWAL[("MemWal<br/>conversation memory")]
     end
 
-    FE --> MP
-    FE --> SH
-    FE --> SERVICE
+    subgraph COMPUTE["Confidential Compute"]
+        ATOMA[("Atoma TEE<br/>or OpenRouter dev fallback")]
+    end
 
-    UP --> STORE
-    UP --> INFT
+    FE --> MKT
+    FE --> BACKEND
 
-    QR --> MP
-    QR --> STORE
-    QR --> TEE
-    QR --> INFT
+    UP --> SEALK
+    UP --> WAL
+    UP --> NFT
 
-    OC --> INFT
+    QR --> MKT
+    QR --> WAL
+    QR --> SEALK
+    QR --> MEMWAL
+    QR --> ATOMA
+    QR --> NFT
 
-    MP --> SH
-    MP --> RD
-    MP --> VE
-    RD --> VE
+    MKT --> SHM
+    MKT --> REV
+    MKT --> VST
+    NFT --> SP
 ```
+
+---
+
+## Walrus Integration
+
+Tacit uses Walrus for **two distinct, independently-encrypted data flows** — not just file storage:
+
+| Data | What it is | Storage | Encryption | Lifetime |
+|---|---|---|---|---|
+| **Knowledge** | The mentor's static expertise (text/files they upload) | Walrus blob, id anchored in `MentorState.blob_id` | Seal, identity = `MentorState` object id; policy = share-balance OR oracle OR allow-list | Until the mentor re-uploads |
+| **Memory** | Every `(question, answer)` exchange for a specific `(mentor, querier)` pair | Walrus blob via **MemWal**, indexed by semantic embedding | Seal (end-to-end, managed by MemWal's relayer); only the account owner/delegate can decrypt | Persists indefinitely, across every future session |
+
+**Knowledge** answers "what does this mentor know." **Memory** answers "what does this mentor remember about *this specific conversation history with you*" — that's what turns a one-shot knowledge-base lookup into a genuinely stateful agent.
+
+### The memory pipeline, concretely
+
+```text
+QUERY N                                              QUERY N+1 (different session, days later)
+────────                                             ──────────────────────────────────────────
+question arrives                                     question arrives
+    │                                                     │
+    ▼                                                     ▼
+memwal.recall(question, namespace)  ──── empty ────▶ memwal.recall(question, namespace)
+    │                                                     │  ◀── finds Query N's exchange
+    ▼                                                     ▼
+knowledge (Walrus+Seal) + memory  ───────────────▶  knowledge (Walrus+Seal) + memory (non-empty!)
+    │                                                     │
+    ▼                                                     ▼
+Atoma / OpenRouter inference                         Atoma / OpenRouter inference
+    │                                                     │
+    ▼                                                     ▼
+memwal.remember(Q + A, namespace)                    mentor's answer now references what you
+    │                                                 told it last time — proven in this repo's
+    ▼                                                 own testing: a mentor correctly recalled a
+answer + confidence → Sui                            user's name and stated problem across two
+                                                      fully independent HTTP requests.
+```
+
+Implementation: `be/src/lib/memory.ts` (`recallMemory` / `rememberExchange`, namespaced per `tacit:{stateId}:{querier}`), wired into `be/src/routes/query.ts` around the existing knowledge-lookup and inference steps — `recall` happens before `runInference`, `remember` is fire-and-forget after the response is computed so it never adds latency to the user-facing answer. The frontend surfaces this with a `🧠 recalled past context` badge on any answer that drew on memory (`fe/src/app/(dashboard)/marketplace/page.tsx`), and a real on-chain confidence trajectory chart (`useConfidenceHistory`, `ConfidenceTrajectory`) showing how the mentor's self-reported confidence evolves across every query it answers — not a single static number.
+
+Account/delegate-key setup for MemWal is entirely scriptable against the `memwal::account` Move contract (`create_account` → `generateDelegateKey()` → `add_delegate_key`) — no manual dashboard click-through required; see `be/.env.example` for the three env vars (`MEMWAL_ACCOUNT_ID`, `MEMWAL_DELEGATE_KEY`, `MEMWAL_RELAYER_URL`).
 
 ---
 
@@ -156,125 +212,114 @@ flowchart LR
 
 | Actor | Stake | Earns | Loses If |
 |---|---|---|---|
-| **Mentor** | Mints iNFT, retains 50% initial shares, uploads knowledge | Per-query royalty (vested 30d) + capital gain on retained shares | Confidence falls → gap count rises → vesting slows / claws back |
-| **Shareholder** | Buys shares on bonding curve | Pro-rata cut of every query + capital gain on share price | Mentor ghosts → public `gapCount` signal → exit on curve |
-| **Learner** | Pays per query (or holds 1 share for subscription) | Private, verifiable, continuously-updating tactical knowledge | Knowledge stale — signaled on-chain by `gapCount` |
+| **Mentor** | Registers on-chain, retains initial shares, uploads knowledge | Per-query royalty (vested) + capital gain on retained shares | Confidence falls → gap count rises → vesting slows / claws back |
+| **Shareholder** | Buys shares on bonding curve | Pro-rata cut of every query + capital gain on share price | Mentor ghosts → public `gap_count` signal → exit on curve |
+| **Learner** | Pays per query (gated by share balance) | Private, verifiable, continuously-updating knowledge **and** a mentor that remembers prior conversations with them specifically | Knowledge stale — signaled on-chain by `gap_count` |
 
-> Every actor wins **only when the loop spins**. Compromising any single actor cannot drain the system.
-
----
-
-## 0G Integration
-
-Tacit is structurally inseparable from the 0G stack. Removing any one of the four primitives breaks a core invariant — there is no "AWS fallback" path.
-
-| 0G Layer | How Tacit Uses It | Files |
-|---|---|---|
-| **0G Chain** | All 6 contracts deployed on mainnet `16661`. iNFT custody, bonding curve, atomic revenue split, vesting, and oracle signaling all settle here. | `sc/src/*.sol` |
-| **0G Storage** | Mentor knowledge encrypted client-side and pushed to `indexer-storage-turbo.0g.ai`; root hash anchored on-chain in `AIMentorINFT.storageRef`. KV for live updates, Log for immutable archive. | `be/src/lib/storage.ts`, `be/src/routes/upload.ts` |
-| **0G Compute (TEE)** | Inference runs inside a TEE-attested provider on 0G Compute. The sealed key for the mentor's knowledge is unwrapped **only inside the enclave** — never exposed to the oracle host or the GPU operator. Provider auto-funding handled programmatically. | `be/src/lib/compute.ts`, `be/src/routes/query.ts` |
-| **ERC-7857 iNFT** | Mentor identity + sealed-key custody. `iTransfer` and `iClone` with multi-proof validation allow ownership transitions without leaking the underlying knowledge — a mentor can sell their iNFT without the buyer having to trust the seller. | `sc/src/AIMentorINFT.sol` (464 LOC), `sc/src/IERC7857.sol` |
-
-### Why 0G, not AWS + Ethereum
-
-A naïve build would put contracts on Ethereum, knowledge on S3, and inference behind an OpenAI API. That stack fails on three simultaneous guarantees this product requires:
-
-| Requirement | AWS + Ethereum | 0G |
-|---|---|---|
-| Knowledge uncensorable | ❌ S3 can revoke / get subpoenaed | ✅ Log layer, Merkle-rooted |
-| Access trustless | ⚠️ Possible, but storage gating off-chain | ✅ Smart contract is the gate |
-| Inference tamper-proof | ❌ OpenAI / cloud LLM is a black box | ✅ TEE attestation, sealed key |
-
-If any one fails, the mentor will not entrust sensitive knowledge to the platform. 0G is the only stack where all three are first-class primitives.
+> Every actor wins **only when the loop spins**. Compromising any single actor cannot drain the system — the oracle has no withdraw permission anywhere in the design.
 
 ---
 
-## Key Security Primitive — Sealed Key Custody
+## Sui + Walrus + Seal + Atoma Integration
 
-The mentor's knowledge is encrypted with a key that is **never** held by the platform operator. The key is sealed against the TEE's attestation report, so it can only be unwrapped inside an enclave running the canonical inference binary.
+| Layer | How Tacit Uses It | Files |
+|---|---|---|
+| **Sui (Move)** | 7-module package (`mentor_nft`, `config`, `seal_policy`, `shares_market`, `revenue`, `vesting`, `marketplace`) deployed on testnet. Capability objects (`AdminCap`, `OracleCap`) replace address-whitelist patterns; per-mentor shared `SharePool`/`RevenuePool` give real parallelism instead of one global market. | `sc/sources/*.move` |
+| **Walrus** | Knowledge blobs (uploaded by mentors) and memory blobs (written by MemWal on every query) both live here. Writes route through Walrus's public upload-relay rather than direct sliver writes, which are unreliable from a single connection — see [Developer Notes](#developer-notes-from-this-build). | `be/src/lib/storage.ts`, `be/src/lib/memory.ts` |
+| **Seal** | Policy-gated decryption: `seal_policy::seal_approve` checks share balance, the registered oracle address, or a per-mentor allow-list — enforced by Seal's key-servers themselves, not trusted to the backend. 2-of-3 testnet key-servers configured for redundancy. | `sc/sources/seal_policy.move`, `be/src/lib/storage.ts` |
+| **MemWal (Walrus Memory)** | Per-`(mentor, querier)` conversation memory: `remember`/`recall` against the public testnet relayer, backed by a Sui-registered `MemWalAccount` + delegate key. This is the agent-memory layer the Walrus track problem statement asks for. | `be/src/lib/memory.ts` |
+| **Atoma** | Confidential TEE inference — request/response AEAD-encrypted end-to-end, attestation reflected in `teeVerified`. Swappable for an OpenRouter dev fallback via one env var while Atoma cloud access is pending (signup there is sales-gated; OpenRouter is instant self-serve) — `teeVerified` correctly reads `false` on that path, never faked. | `be/src/lib/compute.ts` |
+
+### Compute Provider
+
+`COMPUTE_PROVIDER=atoma\|openrouter` in `be/.env` — `atoma` is the real TEE-attested path and what the project ships with by default; `openrouter` exists purely so the rest of the stack (Seal, Walrus, MemWal, on-chain settlement) can be developed and demoed without blocking on Atoma's enterprise sales process. Switching providers touches zero call sites in `routes/query.ts`.
+
+---
+
+## Key Security Primitive — Policy-Gated Decryption, Not a Sealed Key
+
+Unlike a TEE-sealed-key model where *some* enclave operator ultimately holds the unwrap capability, Tacit's knowledge (and memory) decryption is gated by an **on-chain Move policy** that Seal's independent key-servers evaluate themselves — no single party, including Tacit's own backend, ever possesses a master key.
 
 ```text
-UPLOAD                                QUERY
-──────                                ─────
-plaintext                             encrypted blob (from 0G Storage)
-    │                                       │
-    ▼                                       ▼
-encrypt(key)                             ┌──────────────────┐
-    │                                    │  0G Compute TEE  │
-    ▼                                    │  ──────────────  │
-[encrypted blob] → 0G Storage            │  unwrap(sealed)  │
-seal(key → TEE)  → AIMentorINFT          │  decrypt(blob)   │
-    │                                    │  LLM.infer()     │
-    ▼                                    └────────┬─────────┘
-storageRef + sealedKey on-chain                   ▼
-                                          answer + confidence
-                                                  │
-                                                  ▼
-                                         updateConfidence on-chain
+UPLOAD                                   QUERY
+──────                                   ─────
+plaintext                                encrypted blob (from Walrus)
+    │                                         │
+    ▼                                         ▼
+Seal.encrypt(id = stateId)              seal_policy::seal_approve(id, pool, config)
+    │                                    ├─ share balance > 0?  ──┐
+    ▼                                    ├─ caller is oracle?      ├─ ANY true → key-servers release share
+[encrypted blob] → Walrus                └─ caller is allow-listed?┘
+blob_id → MentorState (on-chain)              │
+                                               ▼
+                                     decrypt(blob) → knowledge context
+                                     MemWal.recall() → memory context
+                                               │
+                                               ▼
+                                     Atoma / OpenRouter inference
+                                               │
+                                               ▼
+                                  answer + confidence → on-chain oracle write
 ```
 
-**Invariant:** the oracle host machine, the GPU operator, and any indexer can each read the encrypted blob — none can read the plaintext. Only a TEE running the attested binary can.
+**Invariant:** anyone can read the *encrypted* blob off Walrus — none can read the plaintext without satisfying the on-chain policy, checked independently by Seal's key-servers. Compromising Tacit's backend does not, by itself, leak any mentor's knowledge or any user's conversation history.
 
 ### Bounded Execution
 
-Agents (oracle workers) reason; only the **on-chain contract** can move funds. Even a compromised oracle key cannot drain the system — it can only update confidence scores and increment gap counts.
+Agents (the backend's oracle writes) report state; only the **on-chain contract** can move funds. Even a compromised oracle key cannot drain the system — it can only update confidence scores, query counts, and gap counts.
 
 | Trigger | Action |
 |---|---|
-| User calls `executeQuery` (payable) | `MentorMarketplace` atomically settles to `RevenueDistributor` |
-| Oracle posts low confidence | `incrementGapCount` increments a counter — no fund movement |
-| Mentor patches knowledge | `updateStorageRef` rotates the encrypted blob pointer |
+| User calls `execute_query` (paid in SUI) | `marketplace` atomically settles to `revenue`'s 60/25/15 split |
+| Model signals low confidence | `oracle_increment_gap` increments a counter — no fund movement |
+| Mentor re-uploads knowledge | `oracle_update_blob_id` rotates the blob pointer and resolves one open gap |
 
-> The oracle has no withdraw permission. Even if the oracle key leaks, no funds move.
+> The oracle has no withdraw permission anywhere in the Move package. Even if the oracle key leaks, no funds move.
 
 ---
 
-## 0G APAC Hackathon 2026
+## Sui Overflow 2026 — Walrus Track
 
-Submission to the **0G APAC Hackathon** (March–May 2026), targeting **Track 4: Web 4.0 Open Innovation** (SocialFi / Consumer App) with crossover relevance to **Track 3: Agentic Economy** and **Track 5: Privacy & Sovereign Infrastructure**.
+Submission to **Sui Overflow 2026**, **Walrus Track** — "rethink how agentic systems are built using Walrus as a Verifiable Data Platform for AI."
 
-| Hackathon Requirement | Where to Find It |
+| Track Ask | Where Tacit Delivers It |
 |---|---|
-| 0G mainnet contract addresses | See [Deployed Contracts](#deployed-contracts) |
-| 0G Explorer link / on-chain activity | All contracts viewable on `https://chainscan.0g.ai` |
-| 0G core component integration | 0G Chain (6 contracts) · 0G Storage (encrypted knowledge) · 0G Compute (TEE inference) · ERC-7857 iNFT |
-| Demo video (≤3 min) | Linked from [Live Demo](#) |
-| Architecture & docs | This README |
-| Local reproduction steps | See [Local Development](#local-development) |
+| Long-term memory using persistent, verifiable memory for agents | MemWal-backed per-`(mentor, querier)` conversation memory — see [Walrus Integration](#walrus-integration) |
+| Persistent data and file access using Walrus | Knowledge blobs (mentor-authored) and memory blobs (agent-authored), both on Walrus |
+| Integrations/tooling that make it easier to adopt Walrus or MemWal | `be/src/lib/memory.ts` is a minimal, copyable MemWal integration pattern: recall-before-infer, remember-after-respond, namespaced per counterpart |
+| Artifact-driven / long-running workflows | Each mentor's `confidence_score`/`gap_count` is on-chain state that evolves with every query — an auditable trail of the agent's own self-assessment over time |
 
-**Why Tacit fits the 0G thesis:** the product depends on every flagship 0G primitive — chain, storage, compute, agent identity, sealed execution — to make a non-custodial expert marketplace possible. Without 0G, there is no verifiable knowledge gating, no private inference, and no transferable AI identity.
+**Why this fits beyond a single integration:** the product's core trust pitch — *"decryption is gated by an on-chain policy, not by a party who holds a key"* — extends naturally to memory. A user's conversation history with a mentor is exactly as protected as the mentor's knowledge base: encrypted, access-gated, and never trusted to a single backend operator.
 
 ---
 
-## Deployed Contracts — 0G Mainnet (Chain ID 16661)
+## Deployed Contracts — Sui Testnet
 
-| Contract | Address | Purpose |
-|---|---|---|
-| `MentorMarketplace` | [`0xa23BE1297F836FF7D4E3297320ff16dbc7903e6D`](https://chainscan.0g.ai/address/0xa23BE1297F836FF7D4E3297320ff16dbc7903e6D) | Orchestrator: mint, query settlement, oracle hub |
-| `AIMentorINFT` | [`0x4d107C58DCda55ea6ea2B162d9C434F710E42038`](https://chainscan.0g.ai/address/0x4d107C58DCda55ea6ea2B162d9C434F710E42038) | ERC-7857 iNFT: mentor identity + sealed key custody |
-| `AccessSharesMarket` | [`0x6E860FF2C4ea6b01815D74E54859Cdd9DD172256`](https://chainscan.0g.ai/address/0x6E860FF2C4ea6b01815D74E54859Cdd9DD172256) | Bonding curve trading for access shares |
-| `RevenueDistributor` | [`0x5064796857Ff61482B57017B87C548f46045D256`](https://chainscan.0g.ai/address/0x5064796857Ff61482B57017B87C548f46045D256) | Atomic per-query royalty + dividend split |
-| `VestingEscrow` | [`0x57AA49B4e144f252dA9E21a5cB096EFe76B3Dc55`](https://chainscan.0g.ai/address/0x57AA49B4e144f252dA9E21a5cB096EFe76B3Dc55) | 30-day vesting + claw-back on gap escalation |
+| Object | ID |
+|---|---|
+| Package | [`0xfcfd29f5994aae10c429ac9af63fdaef31d01896131cc4f5d3cecd7081db4855`](https://suiscan.xyz/testnet/object/0xfcfd29f5994aae10c429ac9af63fdaef31d01896131cc4f5d3cecd7081db4855) |
+| `PlatformConfig` (shared) | `0x4ba5c22fe50f191ef522384626b243a56f221c1080f43a88e8b5f97b481bd372` |
+| `AdminCap` | `0x1ea5ff08447418fc72b894dc4623ecf082f478d47cec48aef803d2f3184adb45` |
+| `OracleCap` | `0xe34ae096ce5db379f7e6ab9ae608a87c8c35c2b613ba6da8ef8406e287d06e17` |
 
-> Deployed on 0G Aristotle Mainnet (Chain ID `16661`) — 2026-05-06
+> Published 2026-06-21. `UpgradeCap` currently retained (not burned) for the duration of active development.
 
 ---
 
 ## What's Shipped
 
 ```
-sc/    6 contracts · 1,093 LOC Solidity · Foundry · OZ submodule · 510 LOC tests
-fe/    Next.js 16 · React 19 · viem · wagmi · RainbowKit · three.js · 7 surfaces
-be/    Express · ethers v6 · zod · 0G SDKs · routes: upload · query · oracle · market
+sc/    7 Move modules · 1,084 LOC · 787 LOC tests · 26/26 passing
+fe/    Next.js 16 · React 19 · @mysten/dapp-kit · React Query · 7 dashboards
+be/    Express · @mysten/sui · @mysten/seal · @mysten/walrus · @mysten-incubation/memwal · atoma-sdk
 ```
 
-- 6 mainnet contracts on 0G Chain `16661`
-- ERC-7857 iNFT with `iTransfer` / `iClone` and multi-proof validation
-- Encrypted upload pipeline → 0G Storage with on-chain `storageRef` anchoring
-- TEE inference pipeline through 0G Compute with provider auto-funding
-- On-chain AI confidence oracle (`gapCount`, `confidenceScore`)
-- Share-gated chat with markdown rendering, live polling, mentor activity feed
-- Bonding curve pricing, atomic revenue distribution, vesting escrow
+- Sui Move package: mentor identity, per-mentor `SharePool`/`RevenuePool`, vesting + clawback, Seal policy — all capability-gated, no address-whitelist patterns
+- Seal-gated knowledge pipeline: encrypt → Walrus → on-chain blob-id anchor → policy-checked decrypt
+- MemWal-backed cross-session conversation memory, per mentor × querier
+- Confidential inference via Atoma (with a swappable OpenRouter dev fallback, never misreporting `teeVerified`)
+- On-chain AI confidence oracle (`gap_count`, `confidence_score`) with a real on-chain trajectory chart in the UI
+- Bonding-curve share trading, atomic revenue split, vesting + stale-period clawback
 - 7 production dashboards: marketplace, my-mentors, my-shares, earnings, gap-reports, security-logs, mentor workspace
 
 ---
@@ -282,22 +327,24 @@ be/    Express · ethers v6 · zod · 0G SDKs · routes: upload · query · orac
 ## Repository Layout
 
 ```
-aimentor/
-├── sc/                              Solidity contracts (Foundry)
-│   ├── src/
-│   │   ├── AIMentorINFT.sol         ERC-7857 mentor iNFT (464 LOC)
-│   │   ├── MentorMarketplace.sol    Orchestrator
-│   │   ├── AccessSharesMarket.sol   Bonding curve
-│   │   ├── RevenueDistributor.sol   Atomic per-query split
-│   │   ├── VestingEscrow.sol        30-day vesting + claw-back
-│   │   └── IERC7857.sol             Standard interface
-│   ├── test/MentorMarketplace.t.sol (510 LOC)
-│   └── script/Deploy.s.sol
-├── fe/                              Next.js 16 frontend
-│   └── src/app/(dashboard)/         marketplace · my-shares · my-mentors ·
-│                                    earnings · gap-reports · security-logs
-└── be/                              Oracle service
-    └── src/routes/                  upload · query · oracle · market
+tacit/
+├── sc/                               Sui Move package
+│   ├── sources/
+│   │   ├── mentor_nft.move          MentorNFT + MentorState, oracle-gated writes
+│   │   ├── config.move              PlatformConfig, AdminCap/OracleCap
+│   │   ├── seal_policy.move         seal_approve — share/oracle/allow-list gate
+│   │   ├── shares_market.move       Per-mentor bonding-curve SharePool
+│   │   ├── revenue.move             60/25/15 atomic settlement, curator rewards
+│   │   ├── vesting.move             Linear vesting + stale-period clawback
+│   │   └── marketplace.move         Thin orchestration facade
+│   └── tests/                        787 LOC, 26 tests
+├── fe/                                Next.js 16 frontend
+│   └── src/app/(dashboard)/          marketplace · my-shares · my-mentors ·
+│                                      earnings · gap-reports · security-logs
+└── be/                                Backend service
+    └── src/
+        ├── lib/                      sui.ts · storage.ts · compute.ts · memory.ts
+        └── routes/                   upload · query · oracle · market
 ```
 
 ---
@@ -308,53 +355,54 @@ aimentor/
 
 ```bash
 cd sc
-forge install
-forge build
-forge test
-forge script script/Deploy.s.sol --rpc-url 0g_mainnet --broadcast
+sui move build
+sui move test
+sui client publish --gas-budget 500000000
 ```
 
-Env: `PRIVATE_KEY` (deployer).
+Capture `PACKAGE_ID`, `PlatformConfig`, `AdminCap`, `OracleCap` from the publish output's object changes.
 
-### Oracle service
+### Backend
 
 ```bash
 cd be
 npm install
-cp .env.example .env
+cp .env.example .env   # fill in PACKAGE_ID, CONFIG_ID, ORACLE_CAP_ID, ORACLE_PRIVATE_KEY,
+                        # SEAL_KEY_SERVER_IDS, COMPUTE_PROVIDER (+ its API key),
+                        # MEMWAL_ACCOUNT_ID / MEMWAL_DELEGATE_KEY
 npm run dev
 ```
-
-Env: `ZG_RPC_URL`, `ORACLE_PRIVATE_KEY`, `CONTRACT_INFT`, `CONTRACT_MARKETPLACE`, `CONTRACT_SHARES`, `CONTRACT_REVENUE`, `CONTRACT_VESTING`.
 
 ### Frontend
 
 ```bash
 cd fe
 npm install
+cp .env.example .env.local   # NEXT_PUBLIC_PACKAGE_ID, NEXT_PUBLIC_CONFIG_ID
 npm run dev
 ```
 
-App on `localhost:3000`, default chain 0G Mainnet (`16661`).
+App on `localhost:3000`, default network Sui testnet.
 
 ---
 
-## Developer Feedback for 0G
+## Developer Notes From This Build
 
-Notes from building on the 0G stack — submitted as constructive feedback to the team:
+Real friction points found while building on Sui/Walrus/Seal/MemWal — kept here as constructive notes, not complaints:
 
-- **Storage indexer + RPC pairing:** the `RPC_URL` + `indexer-storage-turbo.0g.ai` relationship is implicit; explicit configuration docs would shorten onboarding.
-- **Compute provider auto-funding:** the broker can fail silently on low balance; surfacing a structured `INSUFFICIENT_BALANCE` error would speed integration.
-- **ERC-7857 examples:** multi-proof construction for `iTransfer` / `iClone` is non-obvious; a canonical reference implementation alongside the EIP would help adoption.
-- **TEE attestation surface:** there is no straightforward way to expose the attestation report to the end user from the frontend SDK; this would meaningfully strengthen trust UX.
+- **Walrus direct sliver writes are unreliable from a single connection.** Writing a blob straight to storage nodes (`@mysten/walrus`'s default path) intermittently fails with `NotEnoughBlobConfirmationsError`. Routing through Mysten's public upload-relay (`uploadRelay: { host: "https://upload-relay.testnet.walrus.space" }`) fixed this completely — worth defaulting to in the SDK, or at least calling out prominently in the quick-start.
+- **WAL is a separate currency from SUI**, and the testnet exchange contract (`wal_exchange::exchange_all_for_wal`) isn't obviously linked from the storage quick-start — easy to hit `Insufficient balance of ...wal::WAL` with zero context the first time.
+- **MemWal's `createAccount`/`addDelegateKey` break against `@mysten/sui` v2.6+** unless `suiClient` is passed explicitly in the call options — the SDK's internal fallback still imports the removed `SuiClient` export from `@mysten/sui/client`. Passing a pre-built `SuiJsonRpcClient` works around it cleanly once you know to look.
+- **seal-docs.wal.app blocks non-browser User-Agents (403)** — tooling that fetches docs programmatically needs a standard browser UA string; trivial once known, opaque until then.
+- **Atoma Cloud's signup looks sales-gated** (Request Demo / Contact forms, no visible self-serve key issuance), which is why this build supports a swappable OpenRouter fallback for development — `teeVerified` is never faked on that path.
 
 ---
 
-## Roadmap Post-Hackathon
+## Roadmap
 
-1. **Q2 2026** — TEE attestation surfaced to user UI; permissionless mentor onboarding; mobile-first share trading.
-2. **Q3 2026** — Knowledge composability (mentor-of-mentors via `iClone`); on-chain reputation; multi-language support.
-3. **Q4 2026** — Institutional vault product: a curated basket of top mentors as a single iNFT, traded as one share.
+1. **Near-term** — Atoma as the default compute provider once cloud access clears; mainnet publish; `UpgradeCap` burn-or-keep decision.
+2. **Mid-term** — Multi-agent coordination between mentors (delegated MemWal access so a "mentor-of-mentors" can recall a sub-mentor's memory); richer memory UI (timeline view, not just a recalled-context badge).
+3. **Long-term** — Institutional vault product: a curated basket of top mentors as a single composable position.
 
 ---
 
@@ -363,10 +411,10 @@ Notes from building on the 0G stack — submitted as constructive feedback to th
 | | Role |
 |---|---|
 | **Dimas** | Product, GTM, design, narrative |
-| **Faisal** | Smart contracts, full-stack, 0G integration |
+| **Faisal** | Smart contracts, full-stack, Sui/Walrus/Seal/MemWal integration |
 
 ---
 
 ## License
 
-MIT. Built for the 0G APAC Hackathon, May 2026.
+MIT. Built for Sui Overflow 2026.
