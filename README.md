@@ -5,8 +5,8 @@
 <h1 align="center">Tacit</h1>
 
 <p align="center">
-  <strong>The first marketplace for knowledge that isn't on the internet.</strong><br/>
-  Experts mint themselves as on-chain AI mentors. Fans co-own the upside. No operator.
+  <strong>Persistent AI mentors powered by Walrus memory.</strong><br/>
+  Private expert knowledge, cross-session agent memory, and Sui-native access control.
 </p>
 
 <p align="center">
@@ -30,9 +30,13 @@
 
 ## Overview
 
-Tacit is a marketplace for the knowledge that is **deliberately not on the internet** — regulatory tactics, founder playbooks, deal mechanics, insider patterns. Experts mint themselves as **on-chain AI mentors** on Sui, fans buy fractional **access shares** along a bonding curve, and every query is answered against knowledge that's encrypted end-to-end and gated by a programmable **Seal** policy — no centralized party ever holds a decryption key.
+Tacit is a persistent AI mentor protocol built for the **Sui Overflow 2026 Walrus Track**. Each mentor is an agent with two durable data layers: encrypted expert knowledge stored as **Walrus** blobs, and cross-session conversation memory stored through **MemWal (Walrus Memory)**.
 
-Built on the **Sui + Walrus + Seal + Atoma** stack: mentor identity lives as a Move object on Sui, knowledge is encrypted and stored on **Walrus**, decryption is authorized by an on-chain **Seal** policy (share balance, oracle, or allow-list — enforced by Seal's key-servers, not by Tacit), inference is architected to run inside **Atoma**'s confidential-compute network (swappable to an OpenRouter dev fallback — see [Compute Provider](#compute-provider) — while Atoma's enterprise access process is pending), and — the part that makes each mentor an actual *agent* rather than a stateless Q&A bot — every conversation is remembered across sessions via **MemWal (Walrus Memory)**.
+The core idea is simple: an AI mentor should not reset every time a user opens a new session. It should remember prior conversations, reuse private files over time, and operate on data that is portable, persistent, and independently verifiable. Tacit makes that possible by putting the mentor's knowledge and memory on Walrus, then using Sui and Seal to control who can decrypt and use it.
+
+On top of that memory layer, Tacit adds a marketplace incentive system. Experts mint themselves as **on-chain AI mentors** on Sui, users buy fractional **access shares**, and every query pays into an atomic revenue split. The tokenomics are not the product's trust layer; they are the mechanism that keeps mentors updating their knowledge as gaps are discovered.
+
+Built on the **Sui + Walrus + Seal + Atoma** stack: mentor identity lives as a Move object on Sui, knowledge is encrypted and stored on **Walrus**, decryption is authorized by an on-chain **Seal** policy (share balance, oracle, or allow-list, enforced by Seal's key-servers, not by Tacit), inference is architected to run inside **Atoma**'s confidential-compute network (swappable to an OpenRouter dev fallback, see [Compute Provider](#compute-provider), while Atoma's enterprise access process is pending), and every conversation is remembered across sessions via **MemWal**.
 
 - **Identity** — mentors minted as a `MentorNFT` (owned object) paired with a shared `MentorState` on Sui; transfer/clone are plain Move calls, no oracle proof required
 - **Knowledge** — encrypted client-side via Seal, stored as a blob on Walrus; only the blob id is anchored on-chain
@@ -44,19 +48,19 @@ Built on the **Sui + Walrus + Seal + Atoma** stack: mentor identity lives as a M
 
 ## The Problem
 
-Today, the most valuable knowledge sits in a few hundred heads and has no monetization path that preserves the expert's reputation **and** scales beyond their calendar.
+Most AI agents are still brittle because their memory is local, temporary, and trapped inside one app. They can answer a task, but they rarely build durable context across sessions, share state across workflows, or reuse files in a way that users and developers can verify.
 
-> **The expertise that compounds the most is the expertise you cannot publish.**
+That problem is sharper for private expert knowledge. The most valuable expertise often cannot be published: regulatory tactics, founder playbooks, deal mechanics, internal operating patterns. If an AI agent is going to use that knowledge, it needs more than a prompt and a database. It needs persistent storage, policy-gated access, and memory that survives across sessions.
 
 | Today's option | Why it fails |
 |---|---|
-| Paid consulting / mentorship | Time-bound, doesn't scale, no asset value |
-| Online courses (Udemy, Maven) | Static, public the moment they ship, instantly stale |
-| Friend.tech-style social tokens | Pure speculation, no underlying utility, no upgrade path |
-| LLM fine-tunes on private data | Operator can exfiltrate; no royalty path; no privacy guarantee |
-| Plain chatbot wrappers | No memory across sessions — every conversation starts from zero |
+| Plain chatbot wrappers | No durable memory; every conversation starts from zero |
+| App-specific agent memory | Locked into one tool, model, or vendor |
+| Centralized file storage | Data can be revoked, hidden, or silently changed |
+| LLM fine-tunes on private data | Operator can exfiltrate; no clear access policy or royalty path |
+| Online courses / static content | Public, stale, and disconnected from user-specific context |
 
-Tacit is the first design where the expert earns **forever**, the fan owns **economic upside**, and the learner gets **verifiable confidentiality and an agent that remembers them** — in a single primitive.
+Tacit turns that into a working Walrus-native agent system: private knowledge lives as encrypted Walrus data, user-specific mentor memory lives in MemWal, and Sui + Seal enforce who can access it. The result is an AI mentor that can remember, improve, and remain portable instead of becoming another stateless chatbot.
 
 ---
 
