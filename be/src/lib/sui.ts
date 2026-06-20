@@ -1,6 +1,6 @@
 import { bcs } from "@mysten/sui/bcs";
-import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
+import { getJsonRpcFullnodeUrl, SuiEvent, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 
@@ -20,9 +20,11 @@ function requireEnv(name: string): string {
   return value;
 }
 
-let client: SuiClient | null = null;
-export function getClient(): SuiClient {
-  if (!client) client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
+let client: SuiJsonRpcClient | null = null;
+export function getClient(): SuiJsonRpcClient {
+  if (!client) {
+    client = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl(NETWORK), network: NETWORK });
+  }
   return client;
 }
 
@@ -124,6 +126,7 @@ export type MentorStateView = {
   lastUpdatedAtMs: number;
   sharePoolId: string;
   revenuePoolId: string;
+  vestingScheduleId: string;
   poolsLinked: boolean;
 };
 
@@ -144,6 +147,7 @@ export async function getMentorState(stateId: string): Promise<MentorStateView> 
     lastUpdatedAtMs: Number(fields.last_updated_at),
     sharePoolId: String(fields.share_pool_id),
     revenuePoolId: String(fields.revenue_pool_id),
+    vestingScheduleId: String(fields.vesting_schedule_id),
     poolsLinked: Boolean(fields.pools_linked),
   };
 }
@@ -200,14 +204,15 @@ export async function checkQueryAccess(stateId: string, userAddress?: string): P
   return { hasAccess: false, reason: "no-access", shareBalance: 0 };
 }
 
-/// Verifies a `marketplace::execute_query` transaction was actually
-/// submitted (and succeeded) by `userAddress` for this mentor's `QueryExecuted`
-/// event, before the backend spends Atoma inference budget on their behalf.
+/// Verifies a `marketplace::execute_query` transaction actually succeeded
+/// for this mentor, and returns the *real* querier address read off the
+/// transaction itself — the backend never has to trust a client-supplied
+/// address, since Sui's own signature verification already proved who sent
+/// it. This replaces the old EVM design's separate signed-message challenge.
 export async function verifyQuerySettlement(
   stateId: string,
-  userAddress: string,
   txDigest: string
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; userAddress?: string; error?: string }> {
   const tx = await getClient().getTransactionBlock({
     digest: txDigest,
     options: { showEffects: true, showEvents: true, showInput: true },
@@ -216,11 +221,12 @@ export async function verifyQuerySettlement(
   if (tx.effects?.status.status !== "success") {
     return { ok: false, error: "Settlement transaction did not succeed" };
   }
-  if (tx.transaction?.data.sender !== userAddress) {
-    return { ok: false, error: "Settlement transaction sender does not match userAddress" };
+  const userAddress = tx.transaction?.data.sender;
+  if (!userAddress) {
+    return { ok: false, error: "Could not read sender from settlement transaction" };
   }
 
-  const matched = (tx.events ?? []).some((event) => {
+  const matched = (tx.events ?? []).some((event: SuiEvent) => {
     if (!event.type.endsWith("::marketplace::QueryExecuted")) return false;
     const parsed = event.parsedJson as { state_id?: string; querier?: string } | undefined;
     return parsed?.state_id === stateId && parsed?.querier === userAddress;
@@ -229,7 +235,7 @@ export async function verifyQuerySettlement(
   if (!matched) {
     return { ok: false, error: "QueryExecuted event not found in settlement transaction" };
   }
-  return { ok: true };
+  return { ok: true, userAddress };
 }
 
 export type MentorListEntry = {
@@ -248,8 +254,9 @@ export async function getAllMentors(): Promise<MentorListEntry[]> {
   }
 
   const mentors: MentorListEntry[] = [];
-  let cursor: string | null | undefined = null;
-  do {
+  let cursor: Parameters<SuiJsonRpcClient["queryEvents"]>[0]["cursor"] = null;
+  let hasNextPage = true;
+  while (hasNextPage) {
     const page = await getClient().queryEvents({
       query: { MoveEventType: `${PACKAGE_ID}::marketplace::MentorRegistered` },
       cursor,
@@ -269,8 +276,9 @@ export async function getAllMentors(): Promise<MentorListEntry[]> {
         name: parsed.name,
       });
     }
-    cursor = page.hasNextPage ? page.nextCursor : null;
-  } while (cursor);
+    hasNextPage = page.hasNextPage ?? false;
+    cursor = page.nextCursor;
+  }
 
   mentorsCache = { data: mentors, ts: Date.now() };
   return mentors;

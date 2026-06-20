@@ -2,7 +2,7 @@ import { SealClient, SessionKey } from "@mysten/seal";
 import { Transaction } from "@mysten/sui/transactions";
 import { fromHex, toHex } from "@mysten/sui/utils";
 import { WalrusClient } from "@mysten/walrus";
-import { CONFIG_ID, getClient, getOracleKeypair, PACKAGE_ID } from "./sui";
+import { CONFIG_ID, getClient, getOracleKeypair, PACKAGE_ID } from "./sui.js";
 
 const WALRUS_EPOCHS = Number(process.env.WALRUS_EPOCHS ?? "5");
 const SEAL_THRESHOLD = Number(process.env.SEAL_THRESHOLD ?? "1");
