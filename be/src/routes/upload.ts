@@ -1,30 +1,29 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
 import { z } from "zod";
-import { uploadKnowledge, getKnowledgeKeyBytes } from "../lib/storage";
-import { updateStorageRef, setSealedKey, getMentorMeta } from "../lib/contracts";
+import { uploadKnowledge } from "../lib/storage.js";
+import { getMentorState, oracleUpdateBlobId } from "../lib/sui.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+const OBJECT_ID_RE = /^0x[0-9a-fA-F]+$/;
+
 const UploadBody = z.object({
-  mentorId: z.string().min(1),
-  tokenId: z.coerce.number().int().nonnegative(),
+  stateId: z.string().regex(OBJECT_ID_RE, "stateId must be a Sui object id"),
 });
 
 // POST /upload
-// Form-data: mentorId (string), tokenId (number), file (binary) atau text (string)
-// Encrypt → upload ke 0G Storage → simpan rootHash on-chain
+// Form-data: stateId (the mentor's MentorState object id), file (binary) or text (string)
+// Encrypt via Seal -> store on Walrus -> anchor the blob id + initial confidence on-chain.
 router.post("/", upload.single("file"), async (req: Request, res: Response) => {
   const parsed = UploadBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+  const { stateId } = parsed.data;
 
-  const { mentorId, tokenId } = parsed.data;
-
-  // Terima file binary atau plain text di body
   let content: string;
   if (req.file) {
     content = req.file.buffer.toString("utf8");
@@ -36,30 +35,17 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
   }
 
   try {
-    // 1. Encrypt + upload ke 0G Storage
-    const { rootHash, sizeBytes } = await uploadKnowledge(mentorId, content);
+    await getMentorState(stateId); // throws if the mentor doesn't exist on-chain
 
-    // 2. Simpan rootHash on-chain di AIMentorINFT (initial confidence = 50)
-    //    Kalau contract belum deploy, lewati dan tetap return rootHash
-    let txHash: string | null = null;
-    if (process.env.CONTRACT_INFT) {
-      // Verify token exists before writing on-chain
-      const meta = await getMentorMeta(tokenId);
-      if (!meta.mintedAt) {
-        res.status(400).json({ error: `Token ID ${tokenId} does not exist on-chain. Register the mentor first.` });
-        return;
-      }
-      txHash = await updateStorageRef(tokenId, rootHash, 50);
-      // 3. Simpan sealedKey on-chain (AES key untuk owner saat ini)
-      await setSealedKey(tokenId, getKnowledgeKeyBytes(mentorId));
-    }
+    const { blobId, sizeBytes } = await uploadKnowledge(stateId, content);
+    const txDigest = await oracleUpdateBlobId(stateId, blobId, 50);
 
     res.json({
       ok: true,
-      rootHash,
+      blobId,
       sizeBytes,
-      txHash,
-      message: `Knowledge uploaded to 0G Storage. rootHash stored${txHash ? " on-chain" : " (contract not set)"}.`,
+      txDigest,
+      message: "Knowledge encrypted via Seal, stored on Walrus, blob id anchored on-chain.",
     });
   } catch (err) {
     console.error("[upload] error:", err);

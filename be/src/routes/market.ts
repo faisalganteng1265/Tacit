@@ -1,46 +1,23 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { ethers } from "ethers";
-import { buildQueryAccessMessage } from "../lib/auth";
 import {
-  buildBuySharesTx,
-  buildExecuteQueryTx,
+  checkQueryAccess,
   getAllMentors,
-  getMarketAccess,
-  getMarketQuote,
-} from "../lib/contracts";
+  getBuyQuote,
+  getCurrentPrice,
+  getMentorState,
+  getQueryPrice,
+} from "../lib/sui.js";
 
 const router = Router();
 
-const TokenQuery = z.object({
-  tokenId: z.coerce.number().int().nonnegative(),
-});
+const OBJECT_ID_RE = /^0x[0-9a-fA-F]+$/;
 
-const AddressQuery = TokenQuery.extend({
-  userAddress: z.string().refine((value) => ethers.isAddress(value), "Invalid userAddress"),
-});
+const StateQuery = z.object({ stateId: z.string().regex(OBJECT_ID_RE) });
+const AddressQuery = StateQuery.extend({ userAddress: z.string().regex(OBJECT_ID_RE) });
+const QuoteQuery = StateQuery.extend({ amount: z.coerce.number().int().positive().default(1) });
 
-const QuoteQuery = TokenQuery.extend({
-  amount: z.coerce.number().int().positive().default(1),
-});
-
-const QueryMessageBody = z.object({
-  tokenId: z.coerce.number().int().nonnegative(),
-  question: z.string().min(1).max(2000),
-  userAddress: z.string().refine((value) => ethers.isAddress(value), "Invalid userAddress"),
-  signedAt: z.coerce.number().int().optional(),
-});
-
-const ExecuteQueryTxBody = TokenQuery.extend({
-  valueWei: z.string().regex(/^\d+$/).optional(),
-});
-
-const BuySharesTxBody = TokenQuery.extend({
-  amount: z.coerce.number().int().positive(),
-  valueWei: z.string().regex(/^\d+$/).optional(),
-});
-
-// GET /market/mentors — list all mentors from on-chain (paginated scan, cached 60s)
+// GET /market/mentors — list all mentors (via MentorRegistered events, cached 60s)
 router.get("/mentors", async (_req: Request, res: Response) => {
   try {
     const mentors = await getAllMentors();
@@ -50,92 +27,43 @@ router.get("/mentors", async (_req: Request, res: Response) => {
   }
 });
 
-// POST /market/query-message
-// FE signs this exact message, then sends signature + signedAt to POST /query.
-router.post("/query-message", (req: Request, res: Response) => {
-  const parsed = QueryMessageBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-
-  const signedAt = parsed.data.signedAt ?? Date.now();
-  const message = buildQueryAccessMessage({ ...parsed.data, signedAt });
-  res.json({ ok: true, message, signedAt });
-});
-
-// GET /market/access?tokenId=0&userAddress=0x...
+// GET /market/access?stateId=0x...&userAddress=0x...
 router.get("/access", async (req: Request, res: Response) => {
   const parsed = AddressQuery.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-
   try {
-    const access = await getMarketAccess(parsed.data.tokenId, parsed.data.userAddress);
+    const access = await checkQueryAccess(parsed.data.stateId, parsed.data.userAddress);
     res.json({ ok: true, access });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
 });
 
-// GET /market/quote?tokenId=0&amount=10
+// GET /market/quote?stateId=0x...&amount=10
+// Display-only pricing in MIST; the frontend builds its own `moveCall` to
+// actually buy shares or execute a query (no backend tx-payload step needed
+// — Move calls don't require an ABI-encoding round trip).
 router.get("/quote", async (req: Request, res: Response) => {
   const parsed = QuoteQuery.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-
   try {
-    const quote = await getMarketQuote(parsed.data.tokenId, parsed.data.amount);
-    res.json({ ok: true, quote });
-  } catch (err) {
-    res.status(500).json({ error: String(err) });
-  }
-});
-
-// POST /market/tx/buy-shares
-// Returns tx payload for FE wallet.sendTransaction(tx).
-router.post("/tx/buy-shares", async (req: Request, res: Response) => {
-  const parsed = BuySharesTxBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-
-  try {
-    const quote = await getMarketQuote(parsed.data.tokenId, parsed.data.amount);
-    if (!quote.buySharesCostWei) {
-      res.status(500).json({ error: "CONTRACT_ACCESS_SHARES is required to quote buy shares" });
-      return;
-    }
-
-    const valueWei = parsed.data.valueWei ?? quote.buySharesCostWei;
+    const { stateId, amount } = parsed.data;
+    const state = await getMentorState(stateId);
+    const [sharePriceMist, buySharesCostMist, queryPriceMist] = await Promise.all([
+      getCurrentPrice(state.sharePoolId),
+      getBuyQuote(state.sharePoolId, amount),
+      getQueryPrice(),
+    ]);
     res.json({
       ok: true,
-      tx: buildBuySharesTx(parsed.data.tokenId, parsed.data.amount, valueWei),
-      quote,
+      quote: { stateId, amount, sharePoolId: state.sharePoolId, sharePriceMist, buySharesCostMist, queryPriceMist },
     });
-  } catch (err) {
-    res.status(500).json({ error: String(err) });
-  }
-});
-
-// POST /market/tx/execute-query
-// Optional FE-driven settlement tx. Backend /query can still settle after inference.
-router.post("/tx/execute-query", async (req: Request, res: Response) => {
-  const parsed = ExecuteQueryTxBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-
-  try {
-    const quote = await getMarketQuote(parsed.data.tokenId, 1);
-    const valueWei = parsed.data.valueWei ?? quote.queryPriceWei;
-    res.json({ ok: true, tx: buildExecuteQueryTx(parsed.data.tokenId, valueWei), quote });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
