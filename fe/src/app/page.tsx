@@ -95,10 +95,10 @@ function ParticleCanvas({ className }: { className?: string }) {
 
 // ─── Marquee ─────────────────────────────────────────────────────────────────
 const MARQUEE = [
-  "MENTOR iNFT", "0G STORAGE", "TEE COMPUTE", "ERC-7857 STANDARD",
-  "SEALED INFERENCE", "BONDING CURVE", "VESTING ESCROW",
+  "SUI MENTOR NFT", "WALRUS KNOWLEDGE", "MEMWAL MEMORY", "SEAL POLICY",
+  "CROSS-SESSION RECALL", "BONDING CURVE", "VESTING ESCROW",
   "ON-CHAIN ORACLE", "ROYALTY SPLIT", "ACCESS SHARES", "GAP SIGNAL",
-  "0G MAINNET · CHAIN ID 16661",
+  "SUI OVERFLOW · WALRUS TRACK",
 ];
 
 function Marquee() {
@@ -124,9 +124,9 @@ const STACK_CARDS = [
     borderColor: "rgba(45,212,191,0.22)",
     glowColor: "rgba(45,212,191,0.07)",
     icon: "⬡",
-    headline: "Tokenize 12 years of\ntactical insight.",
-    body: "Mint yourself as an Intelligent NFT on 0G Chain. Upload your knowledge base — encrypted client-side, Merkle-rooted, privately stored. Earn royalties forever. Every query settled atomically on-chain via a royalty split.",
-    stat: "50% initial shares retained on mint",
+    headline: "Give private expertise\ndurable memory.",
+    body: "Mint a Sui-native AI mentor, upload encrypted knowledge to Walrus, and let every user-specific conversation persist through MemWal. The mentor becomes an agent that can improve over time instead of resetting every session.",
+    stat: "Walrus knowledge · MemWal recall",
   },
   {
     tag: "THE SHAREHOLDER",
@@ -134,8 +134,8 @@ const STACK_CARDS = [
     borderColor: "rgba(129,140,248,0.22)",
     glowColor: "rgba(129,140,248,0.07)",
     icon: "◈",
-    headline: "Co-own the upside of\nhuman knowledge.",
-    body: "Access shares trade on a bonding curve — price rises monotonically with every purchase. Pro-rata cut of every query executed, distributed on-chain without any intermediary, custodian, or manual claim window.",
+    headline: "Co-own access to a\nliving mentor.",
+    body: "Access shares trade on a bonding curve and gate queries through Sui + Seal. Query revenue is split on-chain, while public confidence and gap signals show whether the mentor is getting sharper or going stale.",
     stat: "Dividend per query · on-chain",
   },
   {
@@ -144,9 +144,9 @@ const STACK_CARDS = [
     borderColor: "rgba(245,158,11,0.22)",
     glowColor: "rgba(245,158,11,0.07)",
     icon: "⛨",
-    headline: "Access intelligence that\nisn't on the internet.",
-    body: "One share gates your access. Questions answered inside a TEE — the oracle host, the GPU provider, even the platform operator cannot read your query or the response. Confidential by architecture, not by policy.",
-    stat: "TEE-sealed · zero operator access",
+    headline: "Ask an agent that\nremembers you.",
+    body: "One share gates your access. The mentor answers from encrypted Walrus knowledge plus your own prior conversations from MemWal, so context survives across sessions without being locked into a single app.",
+    stat: "Per-user memory · portable context",
   },
 ];
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <span className="clash-text text-[16px] font-extrabold tracking-[0.18em] text-white">TAC<span className="text-[#2dd4bf]">IT</span></span>
           <div className="hidden items-center gap-8 md:flex">
-            {[["The problem", "#problem"], ["How it works", "#how"], ["0G Stack", "#stack"]].map(([l, h]) => (
+            {[["The problem", "#problem"], ["How it works", "#how"], ["Walrus Stack", "#stack"]].map(([l, h]) => (
               <a key={l} href={h} className="text-[11px] font-bold tracking-[0.1em] text-[#4b5563] hover:text-white transition-colors">{l}</a>
             ))}
           </div>
@@ -400,23 +400,23 @@ export default function LandingPage() {
           {/* Live pill */}
           <div className="mb-10 flex items-center gap-3">
             <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#2dd4bf] opacity-60"/><span className="relative inline-flex h-2 w-2 rounded-full bg-[#2dd4bf]"/></span>
-            <span className="text-[10px] font-bold tracking-[0.28em] text-[#2dd4bf]">LIVE ON 0G MAINNET · ERC-7857 iNFT</span>
+            <span className="text-[10px] font-bold tracking-[0.28em] text-[#2dd4bf]">SUI OVERFLOW 2026 · WALRUS TRACK</span>
           </div>
 
           {/* Main headline — huge, left-aligned */}
           <h1 className="mb-8 max-w-5xl text-[clamp(42px,7vw,110px)] font-extrabold leading-[0.96] tracking-[-0.03em] text-white">
-            Knowledge that<br/>
-            <span className="text-[#374151]">compounds most</span><br/>
+            AI mentors that<br/>
+            <span className="text-[#374151]">remember across</span><br/>
             <span style={{ backgroundImage: "linear-gradient(90deg,#2dd4bf,#67e8f9 50%,#2dd4bf)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              stays private.
+              every session.
             </span>
           </h1>
 
           {/* Subtext + CTAs in a split row */}
           <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between max-w-5xl">
             <p className="max-w-sm text-[15px] leading-[1.75] text-[#5b6470]">
-              Experts mint as iNFTs. Fans co-own the upside. Every query sealed inside a TEE.
-              <span className="block mt-2 text-[#374151]">No operator. No trust required.</span>
+              Encrypted expert knowledge lives on Walrus. User-specific memory lives in MemWal.
+              <span className="block mt-2 text-[#374151]">Sui and Seal enforce who can access it.</span>
             </p>
             <div className="flex items-center gap-4 shrink-0">
               <Link href="/marketplace" className="flex items-center gap-2.5 rounded-xl bg-[#2dd4bf] px-7 py-3.5 text-[12px] font-extrabold tracking-[0.12em] text-black shadow-[0_0_40px_rgba(45,212,191,0.2)] hover:shadow-[0_0_60px_rgba(45,212,191,0.4)] transition-all">
@@ -438,8 +438,8 @@ export default function LandingPage() {
             {[
             [mentors.length > 0 ? String(mentors.length) : "—", "Mentors\non-chain", "#2dd4bf"],
             [mentors.length > 0 ? String(mentors.reduce((s, m) => s + m.totalQueries, 0)) : "—", "Total\nqueries", "#60a5fa"],
-            ["6", "Smart\ncontracts", "#a78bfa"],
-            ["0G", "Mainnet\nChain 16661", "#f59e0b"],
+            ["7", "Move\nmodules", "#a78bfa"],
+            ["2", "Walrus data\nlayers", "#f59e0b"],
           ].map(([v, l, c]) => (
               <div key={v} className="group bg-[#070a0c] px-8 py-10 transition-colors hover:bg-[#0a0d10]">
                 <p className="mb-2 text-[clamp(44px,6vw,80px)] font-extrabold leading-none tracking-tight" style={{ color: c as string }}>{v}</p>
@@ -460,11 +460,11 @@ export default function LandingPage() {
             <div className="relative">
               <span className="absolute -left-2 -top-8 text-[80px] leading-none text-[#2dd4bf]/10 font-serif select-none">&quot;</span>
               <p className="text-[clamp(22px,2.8vw,34px)] font-extrabold leading-[1.2] tracking-tight text-white">
-                The expertise that compounds the most is the expertise you cannot publish.
+                Agents should not forget everything when the session ends.
               </p>
               <div className="mt-8 h-px w-16 bg-[#2dd4bf]/30"/>
               <p className="mt-6 text-[13px] leading-[1.8] text-[#4b5563] max-w-sm">
-                Regulatory tactics. Founder playbooks. Deal mechanics. Insider patterns. None of it monetizable — until now.
+                Private files, user context, and memory need a durable data layer instead of another app-specific database.
               </p>
             </div>
           </FadeIn>
@@ -472,10 +472,10 @@ export default function LandingPage() {
           {/* Right: problem table */}
           <div className="flex-1 flex flex-col gap-1">
             {[
-              { label: "Paid consulting", fail: "Time-bound. Doesn't scale. No asset value after you stop." },
-              { label: "Online courses", fail: "Public the moment they ship. Instantly stale. No upgrade loop." },
-              { label: "Social tokens", fail: "Pure speculation. Zero underlying utility. No privacy path." },
-              { label: "LLM fine-tunes", fail: "Operator can exfiltrate. No royalty path. No confidentiality." },
+              { label: "Plain chatbots", fail: "Stateless by default. Every important conversation starts from zero." },
+              { label: "App-specific memory", fail: "Locked to one tool, model, or backend database." },
+              { label: "Centralized file storage", fail: "Private knowledge can be revoked, hidden, or silently changed." },
+              { label: "LLM fine-tunes", fail: "Operator can exfiltrate. No clear access policy or memory portability." },
             ].map((item, i) => (
               <FadeIn key={item.label} delay={i * 80}>
                 <div className="group flex items-start justify-between gap-6 border-b border-[#141a1f] py-6 transition-colors hover:border-[#1f2937]">
@@ -491,7 +491,7 @@ export default function LandingPage() {
               <div className="mt-2 flex items-start gap-4 rounded-xl border border-[rgba(45,212,191,0.15)] bg-[rgba(45,212,191,0.03)] p-6">
                 <span className="shrink-0 text-[10px] font-extrabold tracking-[0.18em] text-[#2dd4bf] border border-[rgba(45,212,191,0.3)] bg-[rgba(45,212,191,0.08)] rounded px-2 py-1">✓ TACIT</span>
                 <p className="text-[13px] leading-[1.75] text-[#6b7280]">
-                  Expert earns <strong className="text-white">forever</strong> · shareholder owns <strong className="text-white">productive upside</strong> · learner gets <strong className="text-white">verifiable confidentiality</strong> — in one primitive.
+                  Walrus stores <strong className="text-white">encrypted knowledge</strong> · MemWal stores <strong className="text-white">agent memory</strong> · Sui + Seal enforce <strong className="text-white">verifiable access</strong>.
                 </p>
               </div>
             </FadeIn>
@@ -504,17 +504,17 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6">
           <FadeIn>
             <p className="clash text-left text-[clamp(28px,4.5vw,64px)] font-extrabold leading-[1.12] tracking-tight text-white">
-              Knowledge that can&apos;t be screenshotted.
+              Memory that survives the tab closing.
             </p>
           </FadeIn>
           <FadeIn delay={120}>
             <p className="clash mt-3 text-center text-[clamp(22px,3.5vw,52px)] font-extrabold leading-[1.15] tracking-tight text-[#374151]">
-              Returns that don&apos;t require your calendar.
+              Knowledge that stays encrypted on Walrus.
             </p>
           </FadeIn>
           <FadeIn delay={240}>
             <p className="clash mt-3 text-right text-[clamp(18px,2.8vw,42px)] font-extrabold leading-[1.2] tracking-tight text-[#1f2937]">
-              Ownership without custodians.
+              Access enforced by Sui and Seal.
             </p>
           </FadeIn>
         </div>
@@ -526,7 +526,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-6 pb-16">
             <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.32em] text-[#2a3038]">The actors</p>
             <h2 className="max-w-lg text-[clamp(26px,3vw,42px)] font-extrabold leading-[1.12] tracking-tight text-white">
-              Every actor wins only<br/>when the loop spins.
+              Persistent agents need<br/>persistent data.
             </h2>
           </div>
         </FadeIn>
@@ -538,17 +538,17 @@ export default function LandingPage() {
         <FadeIn>
           <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.32em] text-[#2a3038]">The flow</p>
           <h2 className="mb-20 text-[clamp(26px,3vw,42px)] font-extrabold leading-[1.12] tracking-tight text-white">
-            From wallet to<br/>sealed answer.
+            From wallet to<br/>remembered answer.
           </h2>
         </FadeIn>
 
         <div className="space-y-px">
           {[
-            { n: "01", title: "Mint iNFT", body: "Expert mints AIMentorINFT (ERC-7857) on 0G Chain. Encrypted knowledge uploaded to 0G Storage — only the Merkle root lives on-chain. Sealed AES key stored via setSealedKey.", accent: "#2dd4bf" },
-            { n: "02", title: "Buy Access Share", body: "Shareholder buys on the bonding curve. Price rises monotonically. One share gates query access. No custodian, no KYC — just a smart contract.", accent: "#60a5fa" },
-            { n: "03", title: "Execute Query", body: "Learner calls executeQuery (payable). Marketplace atomically settles: mentor royalty → VestingEscrow, shareholder dividend distributed pro-rata. One tx.", accent: "#a78bfa" },
-            { n: "04", title: "TEE Inference", body: "Oracle fetches encrypted blob from 0G Storage, unwraps sealed key inside the TEE enclave on 0G Compute. Inference runs. Key never leaves the enclave.", accent: "#f59e0b" },
-            { n: "05", title: "Confidence Signal", body: "LLM self-reports confidence. Below threshold → gapCount incremented on-chain. Public sell signal. Expert patches the gap → storageRef rotates → price recovers.", accent: "#2dd4bf" },
+            { n: "01", title: "Mint Mentor", body: "Expert mints a Sui MentorNFT paired with shared MentorState. The object anchors identity, access pools, revenue, confidence, and the current Walrus blob pointer.", accent: "#2dd4bf" },
+            { n: "02", title: "Upload Knowledge", body: "Private expertise is encrypted with Seal and written to Walrus. Only the blob id is stored on-chain; decryption is approved by a Move policy.", accent: "#60a5fa" },
+            { n: "03", title: "Buy Access Share", body: "A user buys access through the bonding curve. Holding a share lets Seal key-servers approve decryption under the mentor's policy.", accent: "#a78bfa" },
+            { n: "04", title: "Recall Memory", body: "Before inference, the backend recalls relevant past exchanges for this exact mentor and wallet from MemWal, scoped by namespace.", accent: "#f59e0b" },
+            { n: "05", title: "Answer + Improve", body: "The model answers from Walrus knowledge plus MemWal memory. Low confidence increments an on-chain gap signal; mentor patches rotate the Walrus blob.", accent: "#2dd4bf" },
           ].map((step, i) => (
             <FadeIn key={step.n} delay={i * 60}>
               <div className="group grid grid-cols-[60px_1fr] gap-6 border-b border-[#0f1318] py-8 transition-colors hover:bg-[#07090c] hover:border-[#1a1f24] rounded-lg px-4 -mx-4 md:grid-cols-[80px_200px_1fr] md:gap-10">
@@ -561,89 +561,105 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 0G Bento Grid ── */}
+      {/* ── Walrus Stack Bento Grid ── */}
       <section id="stack" className="mx-auto max-w-7xl px-6 py-20">
         <FadeIn>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.32em] text-[#2a3038]">0G integration</p>
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.32em] text-[#2a3038]">Walrus stack integration</p>
           <h2 className="mb-16 text-[clamp(26px,3vw,42px)] font-extrabold leading-[1.12] tracking-tight text-white">
-            Structurally inseparable<br/>from the 0G stack.
+            Structurally inseparable<br/>from Sui, Walrus, and Seal.
           </h2>
         </FadeIn>
 
-        {/* Bento: 6-column grid, mixed sizes */}
-        <div className="grid gap-3 grid-cols-2 xl:grid-cols-6 xl:grid-rows-2">
+        {/* Bento: hero card on top, four equal cards below */}
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
 
-          {/* 0G Chain — large, spans 4 cols + 2 rows */}
-          <FadeIn className="col-span-2 xl:col-span-4 xl:row-span-2">
-            <div className="group relative h-full min-h-[280px] overflow-hidden rounded-2xl border border-[rgba(45,212,191,0.15)] bg-[#060d0b] p-8 transition-all duration-500 hover:border-[rgba(45,212,191,0.3)]">
+          {/* Sui — hero card, full width */}
+          <FadeIn className="md:col-span-2 xl:col-span-4">
+            <div className="group relative h-full min-h-[220px] overflow-hidden rounded-2xl border border-[rgba(45,212,191,0.15)] bg-[#060d0b] p-8 transition-all duration-500 hover:border-[rgba(45,212,191,0.3)]">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" style={{ background: "radial-gradient(circle at 80% 30%, rgba(45,212,191,0.06) 0%, transparent 60%)" }}/>
-              <div className="absolute bottom-0 right-0 text-[clamp(80px,12vw,160px)] font-extrabold leading-none text-[#2dd4bf]/[0.04] select-none tracking-tighter">0G</div>
+              <div className="absolute bottom-0 right-0 text-[clamp(80px,12vw,160px)] font-extrabold leading-none text-[#2dd4bf]/[0.04] select-none tracking-tighter">SUI</div>
               <div className="relative z-10 flex h-full flex-col">
                 <div className="mb-auto flex items-start justify-between">
-                  <span className="text-[10px] font-extrabold tracking-[0.22em] text-[#2dd4bf]">0G CHAIN</span>
+                  <span className="text-[10px] font-extrabold tracking-[0.22em] text-[#2dd4bf]">SUI · MOVE CONTRACTS</span>
                   <span className="text-[28px] text-[#2dd4bf]/40">⬡</span>
                 </div>
                 <div>
-                  <p className="mt-8 text-[clamp(18px,2vw,26px)] font-extrabold leading-tight text-white">6 contracts deployed on<br/>mainnet · Chain ID 16661</p>
-                  <p className="mt-4 text-[13px] leading-[1.8] text-[#4b5563] max-w-lg">iNFT custody, bonding curve, atomic revenue split, vesting escrow, and oracle signaling all settle on-chain. No off-chain state for fund movement.</p>
-                  <span className="mt-6 inline-block rounded-full border border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.06)] px-3 py-1 text-[10px] font-bold tracking-[0.15em] text-[#2dd4bf]">Deployed · May 2026</span>
+                  <p className="mt-8 text-[clamp(18px,2vw,26px)] font-extrabold leading-tight text-white">7 Move modules<br/>published on testnet</p>
+                  <p className="mt-4 text-[13px] leading-[1.8] text-[#4b5563] max-w-lg">Mentor identity, per-mentor bonding-curve markets, atomic revenue split, vesting + clawback, and the Seal access policy all live as capability-gated Move objects — no address-whitelist patterns, no privileged backend state.</p>
+                  <span className="mt-6 inline-block rounded-full border border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.06)] px-3 py-1 text-[10px] font-bold tracking-[0.15em] text-[#2dd4bf]">Published · June 2026</span>
                 </div>
               </div>
             </div>
           </FadeIn>
 
-          {/* 0G Storage */}
-          <FadeIn delay={80} className="col-span-1 xl:col-span-2">
-            <div className="group relative h-full min-h-[130px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#070a0c] p-6 transition-all hover:border-[rgba(96,165,250,0.2)]">
+          {/* Walrus */}
+          <FadeIn delay={80}>
+            <div className="group relative h-full min-h-[160px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#070a0c] p-6 transition-all hover:border-[rgba(96,165,250,0.2)]">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "radial-gradient(circle at 80% 20%, rgba(96,165,250,0.07) 0%, transparent 60%)" }}/>
               <div className="relative z-10">
                 <div className="mb-4 flex items-start justify-between">
-                  <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#60a5fa]">0G STORAGE</span>
+                  <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#60a5fa]">WALRUS</span>
                   <span className="text-[20px] text-[#60a5fa]/40">▣</span>
                 </div>
                 <p className="text-[14px] font-bold text-white leading-snug">Encrypted knowledge vault</p>
-                <p className="mt-2 text-[11px] leading-[1.7] text-[#374151]">KV for live context · Log for immutable archive</p>
+                <p className="mt-2 text-[11px] leading-[1.7] text-[#374151]">Mentor knowledge as a Seal-encrypted blob; only the blob id is anchored on-chain.</p>
               </div>
             </div>
           </FadeIn>
 
-          {/* ERC-7857 */}
-          <FadeIn delay={160} className="col-span-1 xl:col-span-2">
-            <div className="group relative h-full min-h-[130px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#070a0c] p-6 transition-all hover:border-[rgba(245,158,11,0.2)]">
+          {/* Seal */}
+          <FadeIn delay={160}>
+            <div className="group relative h-full min-h-[160px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#070a0c] p-6 transition-all hover:border-[rgba(245,158,11,0.2)]">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "radial-gradient(circle at 80% 20%, rgba(245,158,11,0.07) 0%, transparent 60%)" }}/>
               <div className="relative z-10">
                 <div className="mb-4 flex items-start justify-between">
-                  <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#f59e0b]">ERC-7857 iNFT</span>
+                  <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#f59e0b]">SEAL</span>
                   <span className="text-[20px] text-[#f59e0b]/40">◈</span>
                 </div>
-                <p className="text-[14px] font-bold text-white leading-snug">Intelligent NFT standard</p>
-                <p className="mt-2 text-[11px] leading-[1.7] text-[#374151]">iTransfer · iClone · multi-proof · 464 LOC</p>
+                <p className="text-[14px] font-bold text-white leading-snug">Policy-gated decryption</p>
+                <p className="mt-2 text-[11px] leading-[1.7] text-[#374151]">seal_approve checks share balance, oracle, or allow-list — enforced by Seal's key-servers, not Tacit.</p>
               </div>
             </div>
           </FadeIn>
 
-          {/* 0G Compute TEE — spans 2 rows in last column */}
-          <FadeIn delay={240} className="col-span-2 xl:col-span-2 xl:row-span-2 xl:col-start-5 xl:row-start-1">
-            <div className="group relative h-full min-h-[280px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#07060e] p-6 transition-all hover:border-[rgba(167,139,250,0.25)]">
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.1) 0%, transparent 65%)" }}/>
-              <div className="relative z-10 flex h-full flex-col justify-between">
-                <div>
-                  <div className="mb-4 flex items-start justify-between">
-                    <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#a78bfa]">0G COMPUTE</span>
-                    <span className="text-[20px] text-[#a78bfa]/40">⛨</span>
-                  </div>
-                  <p className="text-[14px] font-bold text-white leading-snug">TEE Sealed Inference</p>
-                  <p className="mt-3 text-[12px] leading-[1.75] text-[#374151]">Sealed key unwrapped only inside the enclave. Never exposed to oracle host, GPU operator, or platform.</p>
+          {/* MemWal */}
+          <FadeIn delay={240}>
+            <div className="group relative h-full min-h-[160px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#070a0c] p-6 transition-all hover:border-[rgba(167,139,250,0.25)]">
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "radial-gradient(circle at 80% 20%, rgba(167,139,250,0.07) 0%, transparent 60%)" }}/>
+              <div className="relative z-10">
+                <div className="mb-4 flex items-start justify-between">
+                  <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#a78bfa]">MEMWAL</span>
+                  <span className="text-[20px] text-[#a78bfa]/40">❖</span>
                 </div>
-                <div className="mt-6 rounded-lg border border-[rgba(167,139,250,0.12)] bg-[rgba(167,139,250,0.04)] p-4">
-                  <p className="text-[10px] font-extrabold tracking-[0.2em] text-[#a78bfa]/70">INVARIANT</p>
-                  <p className="mt-1 text-[11px] text-[#4b5563] leading-[1.6]">&ldquo;No AWS fallback path. The product only exists because 0G exists.&rdquo;</p>
+                <p className="text-[14px] font-bold text-white leading-snug">Cross-session agent memory</p>
+                <p className="mt-2 text-[11px] leading-[1.7] text-[#374151]">Every exchange is written per (mentor, querier) and recalled before the next answer.</p>
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Atoma */}
+          <FadeIn delay={320}>
+            <div className="group relative h-full min-h-[160px] overflow-hidden rounded-2xl border border-[#141a1f] bg-[#07060e] p-6 transition-all hover:border-[rgba(255,107,107,0.25)]">
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(255,107,107,0.1) 0%, transparent 65%)" }}/>
+              <div className="relative z-10">
+                <div className="mb-4 flex items-start justify-between">
+                  <span className="text-[10px] font-extrabold tracking-[0.2em] text-[#ff6b6b]">ATOMA</span>
+                  <span className="text-[20px] text-[#ff6b6b]/40">✦</span>
                 </div>
+                <p className="text-[14px] font-bold text-white leading-snug">Confidential TEE inference</p>
+                <p className="mt-2 text-[11px] leading-[1.7] text-[#374151]">Architected for Atoma's attested network; swappable to an OpenRouter dev fallback — never reports a fake attestation.</p>
               </div>
             </div>
           </FadeIn>
 
         </div>
+
+        <FadeIn delay={400}>
+          <div className="mt-3 rounded-lg border border-[rgba(45,212,191,0.12)] bg-[rgba(45,212,191,0.03)] p-4">
+            <p className="text-[10px] font-extrabold tracking-[0.2em] text-[#2dd4bf]/70">INVARIANT</p>
+            <p className="mt-1 text-[11px] text-[#4b5563] leading-[1.6]">&ldquo;No party — not even Tacit's own backend — ever holds a master decryption key.&rdquo;</p>
+          </div>
+        </FadeIn>
       </section>
 
       {/* ── Final CTA — full-bleed bold ── */}
@@ -656,20 +672,20 @@ export default function LandingPage() {
             <div className="relative z-10 px-10 py-16 md:px-16 md:py-20">
               <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="mb-4 text-[10px] font-extrabold uppercase tracking-[0.35em] text-[#2dd4bf]/40">0G APAC Hackathon · May 2026</p>
+                  <p className="mb-4 text-[10px] font-extrabold uppercase tracking-[0.35em] text-[#2dd4bf]/40">Sui Overflow 2026 · Walrus Track</p>
                   <h2 className="text-[clamp(30px,4.5vw,60px)] font-extrabold leading-[1.08] tracking-tight text-white">
                     Your knowledge<br/>
                     <span className="text-[#2dd4bf]">is an asset.</span>
                   </h2>
                   <p className="mt-5 max-w-sm text-[14px] leading-[1.75] text-[#4b5563]">
-                    Live on 0G Mainnet. The first market for knowledge that stays permanently private.
+                    Live on Sui testnet. The first market for knowledge that stays permanently private — and remembers you.
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-3">
                   <Link href="/marketplace" className="flex items-center justify-center gap-2.5 rounded-xl bg-[#2dd4bf] px-10 py-4 text-[13px] font-extrabold tracking-[0.12em] text-black shadow-[0_0_50px_rgba(45,212,191,0.2)] hover:shadow-[0_0_80px_rgba(45,212,191,0.4)] transition-all">
                     OPEN MARKETPLACE <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </Link>
-                  <a href="https://github.com/faisalganteng1265/0G" target="_blank" rel="noreferrer"
+                  <a href="https://github.com/faisalganteng1265/Tacit" target="_blank" rel="noreferrer"
                     className="flex items-center justify-center gap-2 rounded-xl border border-[#1a2028] px-10 py-4 text-[13px] font-bold tracking-[0.1em] text-[#4b5563] hover:border-[#2a3038] hover:text-white transition-all">
                     VIEW SOURCE
                   </a>
@@ -684,9 +700,9 @@ export default function LandingPage() {
       <footer className="border-t border-[#0a0e12] px-6 py-10">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <span className="text-[14px] font-extrabold tracking-[0.22em] text-white">TAC<span className="text-[#2dd4bf]">IT</span></span>
-          <p className="text-[10px] tracking-[0.1em] text-[#1f2937]">© 2026 TACIT · POWERED BY 0G PROTOCOL · MIT</p>
+          <p className="text-[10px] tracking-[0.1em] text-[#1f2937]">© 2026 TACIT · POWERED BY SUI + WALRUS + SEAL · MIT</p>
           <div className="flex gap-6">
-            {["GITHUB","0G EXPLORER","DOCS"].map(l => (
+            {["GITHUB","SUI EXPLORER","DOCS"].map(l => (
               <button key={l} className="text-[10px] font-bold tracking-[0.12em] text-[#1f2937] hover:text-[#4b5563] transition-colors">{l}</button>
             ))}
           </div>
