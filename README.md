@@ -68,7 +68,7 @@ Tacit turns that into a working Walrus-native agent system: private knowledge li
 
 > Scenario: a former regulator has 12 years of tactical insight into Indonesian compliance loopholes. She cannot publish it. Tacit lets her tokenize it.
 
-1. **Register Mentor** — she connects her wallet, calls `marketplace::register_mentor`, minting a `MentorNFT` + `MentorState` + `SharePool` + `RevenuePool` + `VestingSchedule` in one signed transaction. She retains the initial share allocation.
+1. **Register Mentor** — she connects her wallet, calls `marketplace::register_mentor`, minting a `MentorNFT` + `MentorState` + `SharePool` + `RevenuePool` + `VestingSchedule` in one signed transaction. She retains the initial share allocation (this initial allocation is a permanent floor — mentors cannot sell below it for the life of the pool, by design).
 2. **Upload Encrypted Knowledge** — her framework is encrypted via **Seal** (identity = her mentor's `MentorState` id) and stored as a blob on **Walrus**; only the blob id is anchored on-chain.
 3. **Bonding Curve Trading** — fans buy access shares through `shares_market`; price rises monotonically on each buy.
 4. **Gated Query** — a shareholder asks a question. The backend verifies on-chain settlement and share balance, downloads the blob from Walrus, and Seal's key-servers authorize decryption directly against the on-chain policy.
@@ -216,11 +216,11 @@ Account/delegate-key setup for MemWal is entirely scriptable against the `memwal
 
 | Actor | Stake | Earns | Loses If |
 |---|---|---|---|
-| **Mentor** | Registers on-chain, retains initial shares, uploads knowledge | Per-query royalty (vested) + capital gain on retained shares | Confidence falls → gap count rises → vesting slows / claws back |
-| **Shareholder** | Buys shares on bonding curve | Pro-rata cut of every query + capital gain on share price | Mentor ghosts → public `gap_count` signal → exit on curve |
+| **Mentor** | Registers on-chain, retains initial shares, uploads knowledge | Per-query royalty (vested) + capital gain on retained shares | Stops updating knowledge past `stale_period_ms` → admin claws back the entire unclaimed balance and permanently disables further vesting for that schedule |
+| **Shareholder** | Buys shares on bonding curve | Pro-rata cut of every query + capital gain on share price | Mentor ghosts → `gap_count` rises (signal only) → exit on curve, subject to price impact if many holders exit at once |
 | **Learner** | Pays per query (gated by share balance) | Private, verifiable, continuously-updating knowledge **and** a mentor that remembers prior conversations with them specifically | Knowledge stale — signaled on-chain by `gap_count` |
 
-> Every actor wins **only when the loop spins**. Compromising any single actor cannot drain the system — the oracle has no withdraw permission anywhere in the design.
+> Every actor wins **only when the loop spins**. Compromising any single actor cannot drain the system — the oracle has no withdraw permission anywhere in the design. This is a custody guarantee, not an economic one — see [Known Limitations & Accepted Tradeoffs](#known-limitations--accepted-tradeoffs) for the market-risk side.
 
 ---
 
@@ -278,7 +278,7 @@ Agents (the backend's oracle writes) report state; only the **on-chain contract*
 | Model signals low confidence | `oracle_increment_gap` increments a counter — no fund movement |
 | Mentor re-uploads knowledge | `oracle_update_blob_id` rotates the blob pointer and resolves one open gap |
 
-> The oracle has no withdraw permission anywhere in the Move package. Even if the oracle key leaks, no funds move.
+> The oracle has no withdraw permission anywhere in the Move package. Even if the oracle key leaks, no funds move. This guarantees fund custody is safe from a compromised oracle — it does not by itself protect against bonding-curve price-impact risk from large trades, covered under [Known Limitations](#known-limitations--accepted-tradeoffs).
 
 ---
 
@@ -399,6 +399,22 @@ Real friction points found while building on Sui/Walrus/Seal/MemWal — kept her
 - **MemWal's `createAccount`/`addDelegateKey` break against `@mysten/sui` v2.6+** unless `suiClient` is passed explicitly in the call options — the SDK's internal fallback still imports the removed `SuiClient` export from `@mysten/sui/client`. Passing a pre-built `SuiJsonRpcClient` works around it cleanly once you know to look.
 - **seal-docs.wal.app blocks non-browser User-Agents (403)** — tooling that fetches docs programmatically needs a standard browser UA string; trivial once known, opaque until then.
 - **Atoma Cloud's signup looks sales-gated** (Request Demo / Contact forms, no visible self-serve key issuance), which is why this build supports a swappable OpenRouter fallback for development — `teeVerified` is never faked on that path.
+
+---
+
+## Known Limitations & Accepted Tradeoffs
+
+Built for a hackathon timeline — these are documented gaps we're aware of, not gaps we're hiding.
+
+- **Mentor's initial allocation (500 shares) is a permanent floor, not a time-lock.** `ECreatorLock` in `shares_market.move` prevents the mentor from ever selling below `MENTOR_INITIAL`, for the lifetime of the pool. This is intentional alignment (mentor always keeps skin in the game) — not a bug, and not something that unlocks later.
+
+- **The bonding curve has no per-address buy cap and no per-transaction sell cap.** A single address can currently acquire a large share of a mentor's curator pool, and any holder can exit their full position in one transaction. This is the standard tradeoff of a single deterministic-formula curve (the same class of exposure exists in Friend.tech, Bancor, pump.fun-style curves) — passive holders are exposed to price impact from other participants' trades, with no permissionless way to add depth. We have not yet sized `BASE_PRICE`/`PRICE_SLOPE` against a specific cost-of-attack threshold, and have not added throttling. This is the top item on our near-term roadmap, not an oversight we're unaware of.
+
+- **`gap_count` is currently informational only.** It's a public, on-chain signal that updates when the model reports low confidence, but it is not yet wired to any automatic protection (e.g., a sell-rate throttle during high-gap periods). Today it helps future buyers make informed decisions; it does not yet protect existing holders during an active confidence decline. Closing that loop is a planned next step.
+
+- **Vesting clawback sweeps the entire unclaimed balance, not just the formally-unvested remainder, and is permanent.** `vesting::clawback` is admin-gated and only callable once `stale_period_ms` (30 days by default) has passed since the mentor's last knowledge update — but the amount it sweeps is `total - claimed`, which can include royalty that has already fully vested by the time-based formula but simply hadn't been withdrawn yet. There's no partial or sliding-scale forfeiture, and no second grace window once eligible: clawback is all-or-nothing, in one call. The affected `VestingSchedule` also can never accept new vesting deposits again afterward — there is no reset path in the contract. A mentor's best defense today is claiming regularly, since only the unclaimed remainder is ever at risk.
+
+We'd rather list these explicitly than have them discovered as surprises — happy to discuss any of them in more depth.
 
 ---
 
